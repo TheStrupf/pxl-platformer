@@ -9,13 +9,17 @@ Drawn with discrete upscaled pixels anyway.
 */
 
 #include "raylib.h"
-#include <float.h>
-#include <stdbool.h>
+#include "shared.h"
 
 #define FPS 60
 #define ACC_MIN 0.1
+#define SCREEN_WIDTH 512
+#define SCREEN_HEIGHT 512
 
 const float DT = 1.0 / FPS;
+
+Texture2D screentex;
+uchar *screenbuffer;
 
 int main(void)
 {
@@ -24,6 +28,13 @@ int main(void)
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(STARTWIDTH, STARTHEIGHT, "Hello Git");
         SetTargetFPS(FPS);
+        Image i = GenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+        screentex = LoadTextureFromImage(i);
+        UnloadImage(i);
+        screenbuffer = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4); // 4 bytes per pixel
+        if (!screenbuffer)
+                return 1;
+
         double acc = 0;
         double lasttime = GetTime();
         while (!WindowShouldClose()) {
@@ -35,6 +46,7 @@ int main(void)
 
                 bool draw = false;
                 while (acc >= DT) {
+                        // update
                         acc -= DT;
                         draw = true;
                 }
@@ -42,10 +54,13 @@ int main(void)
                 if (draw) {
                         BeginDrawing();
                         ClearBackground(WHITE);
-                        DrawRectangle(10, 10, 10, 10, RED);
+                        UpdateTexture(screentex, screenbuffer);
+                        DrawTexture(screentex, 0, 0, WHITE);
                         EndDrawing();
                 }
         }
+        free(screenbuffer);
+        UnloadTexture(screentex);
         CloseWindow();
         return 0;
 }
