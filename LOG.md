@@ -1,3 +1,7 @@
+**2022.07.14b**
+- Added more gfx functionality (line, rect)
+- Added world structure + methods/functions
+
 **2022.07.14a**
 - Changelog creation
 - Added basic indexed software rendering: rectangular sprites with mirroring and 90 degree rotations
