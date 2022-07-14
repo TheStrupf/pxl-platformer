@@ -4,6 +4,7 @@
 #include <float.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,9 +23,12 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
+#define STREQ(a, b) (strcmp((a), (b)) == 0)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABS(a) ((a) > 0 ? (a) : -(a))
+#define COMP(a, b) (((a) < (b)) - ((a) > (b)))
+#define SIGN(a) COMP(0, a)
 
 // BINARY LITERALS in native C without GCC extension
 // Credits: stackoverflow.com/a/7577517
