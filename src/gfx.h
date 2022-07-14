@@ -1,6 +1,7 @@
 #ifndef GFX_H
 #define GFX_H
 
+#include "geo.h"
 #include "shared.h"
 
 // Pico-8 color palette
@@ -58,14 +59,7 @@ typedef struct tex {
         uchar *px;
 } tex;
 
-typedef struct rec {
-        int x;
-        int y;
-        int w;
-        int h;
-} rec;
-
-int gfx_init();
+void gfx_init();
 void gfx_destroy();
 void gfx_begin();
 void gfx_end();
@@ -73,12 +67,16 @@ void gfx_show();
 bool gfx_close_requested();
 void gfx_set_translation(int x, int y);
 
+int gfx_width();
+int gfx_height();
+
 // return tex as value
 // could return as a pointer IF I wanted to change texture dimensions
 tex gfx_tex_create(uint w, uint h);
 void gfx_tex_destroy(tex t);
 void gfx_clear_tex(tex t, uchar col);
 void gfx_clear(uchar col);
+void gfx_px(int x, int y, uchar col);
 
 // flags: bitmask for transformation
 // 001: Flip X

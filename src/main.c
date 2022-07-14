@@ -5,50 +5,55 @@
 // Drawn with discrete upscaled pixels anyway.
 
 #include "gfx.h"
+#include "input.h"
+#include "mem.h"
 #include "raylib.h"
 #include "shared.h"
 #include "world.h"
+#include <limits.h>
 
-#define ACC_MIN 0.1
-const float DT = 1.0 / FPS;
+#define MEMORY MB(512)
+#define DT (1.0 / FPS)
 
 int main(void)
 {
-        if (gfx_init() > 0)
-                goto CLEAN_1;
-        if (world_init() > 0)
-                goto CLEAN_2;
+#if CHAR_BIT != 8
+        return 1;
+#endif
+        // custom allocator
+        void *mem = malloc(MEMORY);
+        if (!mem)
+                return 1;
+        memset(mem, 0, MEMORY);
+        mem_init(mem, MEMORY);
+        gfx_init();
+        world_init();
 
         double acc = 0;
         double lasttime = GetTime();
         while (!gfx_close_requested()) {
                 double time = GetTime();
                 acc += time - lasttime;
-                if (acc > ACC_MIN)
-                        acc = ACC_MIN;
                 lasttime = time;
 
-                bool draw = false;
-                while (acc >= DT) {
-                        world_udpate();
-                        acc -= DT;
-                        draw = true;
-                }
+                // cap delta accumulator ("spiral of death")
+                acc = MAX(acc, 0.1);
+                if (acc >= DT) {
+                        do {
+                                btn_update();
+                                world_update();
+                                acc -= DT;
+                        } while (acc >= DT);
 
-                if (draw) {
                         gfx_begin();
                         world_draw();
                         gfx_line(0, 0, 50, 20, 5);
                         gfx_rec_outline(10, 10, 30, 40, 3);
                         gfx_end();
                 }
-                // draw rendertexture to not mess with
-                // raylib's frame counting
                 gfx_show();
         }
-CLEAN_2:
-        world_destroy();
-CLEAN_1:
-        gfx_destroy();
+        free(mem);
+
         return 0;
 }

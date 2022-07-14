@@ -1,4 +1,6 @@
 #include "gfx.h"
+#include "geo.h"
+#include "mem.h"
 #include "raylib.h"
 #include "shared.h"
 
@@ -24,8 +26,10 @@ uchar pico_pal[128] = {
 };
 // clang-format on
 
-#define SCREEN_WIDTH 512
-#define SCREEN_HEIGHT 512
+#define GAME_WIDTH 384
+#define GAME_HEIGHT 216
+#define BUFFER_WIDTH 512
+#define BUFFER_HEIGHT 512
 
 Texture2D ray_screentex;
 uchar *screenbuffer;
@@ -34,31 +38,26 @@ tex target;
 int offsetx = 0;
 int offsety = 0;
 
-int gfx_init()
+// game width/height might become variable?
+int width = GAME_WIDTH;
+int height = GAME_HEIGHT;
+
+void gfx_init()
 {
         const int STARTWIDTH = 800;
         const int STARTHEIGHT = 600;
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(STARTWIDTH, STARTHEIGHT, "Hello Git");
         SetTargetFPS(FPS);
-        Image img = GenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+        Image img = GenImageColor(BUFFER_WIDTH, BUFFER_HEIGHT, BLACK);
         ray_screentex = LoadTextureFromImage(img);
         UnloadImage(img);
-        screenbuffer = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 4); // 4 bytes per pixel
-        screentex = gfx_tex_create(SCREEN_WIDTH, SCREEN_HEIGHT);
-        if (!screenbuffer || !screentex.px) {
-                gfx_destroy();
-                printf("Err gfx\n");
-                return 1;
-        }
-        return 0;
+        screenbuffer = mem_alloc(BUFFER_WIDTH * BUFFER_HEIGHT * 4); // 4 bytes per pixel
+        screentex = gfx_tex_create(BUFFER_WIDTH, BUFFER_HEIGHT);
 }
 
 void gfx_destroy()
 {
-        if (screenbuffer)
-                free(screenbuffer);
-        gfx_tex_destroy(screentex);
         UnloadTexture(ray_screentex);
         CloseWindow();
 }
@@ -72,9 +71,9 @@ void gfx_begin()
 
 void gfx_end()
 {
-        for (int y = 0, i = 0; y < SCREEN_HEIGHT; y++) {
-                const int c = y * SCREEN_WIDTH;
-                for (int x = 0; x < SCREEN_WIDTH; x++, i += 4) {
+        for (int y = 0, i = 0; y < BUFFER_HEIGHT; y++) {
+                const int c = y * BUFFER_WIDTH;
+                for (int x = 0; x < BUFFER_WIDTH; x++, i += 4) {
                         memcpy(
                             &screenbuffer[i],
                             &pico_pal[screentex.px[x + c] << 2],
@@ -86,10 +85,28 @@ void gfx_end()
 
 void gfx_show()
 {
+        int sw = GetScreenWidth();
+        int sh = GetScreenHeight();
+        float scalex = (float)sw / (float)width;
+        float scaley = (float)sh / (float)height;
+        int gw, gh, tx, ty;
+        if (scalex < scaley) { // black bars top and bottom
+                gw = sw;
+                gh = height * scalex;
+                tx = 0;
+                ty = (int)((sh - gh) * 0.5);
+        } else { // black bars left and right
+                gw = width * scaley;
+                gh = sh;
+                tx = (int)((sw - gw) * 0.5);
+                ty = 0;
+        }
+
         BeginDrawing();
         ClearBackground(WHITE);
-        DrawTexturePro(ray_screentex, (Rectangle){0, 0, 128, 128},
-                       (Rectangle){0, 0, 1024, 1024},
+        DrawTexturePro(ray_screentex,
+                       (Rectangle){0, 0, width, height},
+                       (Rectangle){tx, ty, gw + 0.5f, gh + 0.5f},
                        (Vector2){0, 0}, 0, WHITE);
         EndDrawing();
 }
@@ -105,10 +122,19 @@ void gfx_set_translation(int x, int y)
         offsety = y;
 }
 
+int gfx_width()
+{
+        return width;
+}
+int gfx_height()
+{
+        return height;
+}
+
 tex gfx_tex_create(uint w, uint h)
 {
         tex t;
-        t.px = malloc(w * h);
+        t.px = mem_alloc(w * h);
         if (!t.px)
                 t.w = t.h = 0;
         else {
@@ -121,7 +147,7 @@ tex gfx_tex_create(uint w, uint h)
 void gfx_tex_destroy(tex t)
 {
         if (t.px)
-                free(t.px);
+                mem_free(t.px);
 }
 
 void gfx_clear_tex(tex t, uchar col)
@@ -133,6 +159,16 @@ void gfx_clear_tex(tex t, uchar col)
 void gfx_clear(uchar col)
 {
         gfx_clear_tex(target, col);
+}
+
+void gfx_px(int x, int y, uchar col)
+{
+        if (col >= COL_TRANSPARENT)
+                return;
+        x += offsetx;
+        y += offsety;
+        if ((uint)x < target.w && (uint)y < target.h)
+                target.px[x + y * target.w] = col;
 }
 
 void gfx_sprite(tex s, int x, int y, rec r, char flags)

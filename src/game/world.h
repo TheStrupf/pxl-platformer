@@ -6,8 +6,7 @@
 #include "shared.h"
 
 #define NUM_LAYERS 4
-#define NUM_TILES 262144 // 512 x 512 tiles
-#define PX 8             // pixels per tile width
+#define NUM_TILES (512 * 512)
 
 // a pixel (uchar) is bitmask of properties
 enum pixel_flags {
@@ -22,13 +21,31 @@ enum pixel_flags {
         PX_8 = 128,
 };
 
+enum en_type {
+        EN_ACTOR,
+        EN_SOLID,
+};
+
+// macro for subclassing
+#define super ((entity *)this)
+typedef void (*en_func)(void *);
+
 typedef struct entity {
+        uint type;
         bool active;
         bool alive;
         int x;
         int y;
         int w;
         int h;
+        ushort timer;
+        ushort subtimer;
+        uchar action;
+        en_func *jump_table;
+
+        bool collidable;
+        struct entity *linked;
+        uchar *px;
 } entity;
 
 typedef struct tile {
@@ -43,22 +60,35 @@ typedef struct game_world {
         uint ph;
 
         list *entities; // entity*
+        list *actors;   // entity*
+        list *solids;   // entity*
 
+        uchar tiles[NUM_TILES];
         tile rtiles[NUM_LAYERS][NUM_TILES];
-        uchar pixels[NUM_TILES * PX * PX];
+        uchar pixels[NUM_TILES * 64]; // 8x8 pixels per tile
 } game_world;
 
 extern uint tick;
 extern game_world *world;
 
+// I'm doing the movement logic as outlined in:
+// maddythorson.medium.com/celeste-and-towerfall-physics-d24bd2ae0fc5
+// Had a good experience with that in that past as well
+
 int world_init();
-void world_udpate();
+void world_update();
 void world_draw();
-void world_destroy();
+
+void set_tile_pixels(int tx, int ty, int collID);
 uchar get_pixels(int x, int y, int w, int h);
 void set_pixels(int x, int y, int w, int h, uchar px);
 void add_pixel_flags(int x, int y, int w, int h, uchar px);
 
-entity *entity_create();
+entity *en_create_actor();
+entity *en_create_solid(int w, int h);
+void en_move_actor(entity *e, int dx, int dy);
+
+// input x, y, w, h relative to map origin or entity?
+uchar en_get_pixels(entity *e, int x, int y, int w, int h);
 
 #endif
