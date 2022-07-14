@@ -10,8 +10,6 @@ The game will end up as some kind of Metroidvania. I'm thinking about a healthy 
 - C99 standard
 - Custom coded indexed software rendering (PICO-8 extended palette), final frame buffer pushed to OpenGL via Raylib
 
-I'll try to keep the dependency on Raylib and other external libraries low.
-
 ### Dependencies
 - Raylib
 - stdlib.h
@@ -21,9 +19,11 @@ I'll try to keep the dependency on Raylib and other external libraries low.
 - string.h
 - float.h
 
+I'll try to keep the dependency on Raylib and other external libraries low.
+
 ### Building
 
-I currently compile and run my game with GCC on Windows using a simple .bat:
+I currently compile and run my game with GCC on Windows using a simple .bat (see below). That .bat is located in the same folder as the src folder, next to the created game.exe, a lib folder for raylib and an asset folder for art, sounds, music and maps. Raylib is statically linked right now.
 ```
 cd /d %~dp0
 gcc src/*.c src/util/*.c src/game/*.c -o game.exe -O1 -Wall -std=c99 -Wno-missing-braces -I src/ -I src/include/ -I src/util/ -I src/game/ -L lib/ -lraylib -lopengl32 -lgdi32 -lwinmm
