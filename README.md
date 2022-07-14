@@ -17,6 +17,8 @@ I'll try to keep the dependency on Raylib and other external libraries low.
 - stdlib.h
 - stdint.h
 - stdbool.h
+- stdio.h
+- string.h
 - float.h
 
 ### Building
@@ -24,7 +26,7 @@ I'll try to keep the dependency on Raylib and other external libraries low.
 I currently compile and run my game with GCC on Windows using a simple .bat:
 ```
 cd /d %~dp0
-gcc src/*.c -o game.exe -O1 -Wall -std=c99 -Wno-missing-braces -I src/include/ -L lib/ -lraylib -lopengl32 -lgdi32 -lwinmm
+gcc src/*.c src/util/*.c src/game/*.c -o game.exe -O1 -Wall -std=c99 -Wno-missing-braces -I src/ -I src/include/ -I src/util/ -I src/game/ -L lib/ -lraylib -lopengl32 -lgdi32 -lwinmm
 game.exe
 pause
 ```
