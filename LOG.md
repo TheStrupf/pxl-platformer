@@ -1,3 +1,7 @@
+**2022.07.14d**
+- Related to previous: Added a variant of list_get(list*, int, void*) using memcpy. Not as user-friendly as I would like but it does the job.
+- Pulled the entity specific part out of world.h/.c
+
 **2022.07.14c**
 - Added custom memory allocator for fun (freelist) although it's not active yet
 - There was a bug with the dynamic list void* list_get(list*, int) function. Apparantly it got me weird addresses. Casting the void* pointer of the list data to an array and then retrieving the element that way worked fine, though. Cut that function for now.
