@@ -1,22 +1,13 @@
 #include "world.h"
+#include "entity.h"
 #include "geo.h"
 #include "input.h"
 #include "mem.h"
 #include "shared.h"
 #include <stdio.h>
 
-#define MAX_ENTITIES 64
-
-// entity with additional padding
-// for subclassing
-typedef struct entity_generic {
-        entity base;
-        char padding[128];
-} entity_generic;
-
 uint tick;
 game_world *world;
-entity entities_raw[MAX_ENTITIES];
 
 // individual pixels of a tile
 // will be used to set sloped tiles etc.
@@ -91,9 +82,6 @@ int world_init()
         world->entities = list_create_sized(MAX_ENTITIES, sizeof(entity *));
         world->actors = list_create_sized(MAX_ENTITIES, sizeof(entity *));
         world->solids = list_create_sized(MAX_ENTITIES, sizeof(entity *));
-        for (int n = 0; n < MAX_ENTITIES; n++) {
-                entities_raw[n].active = false;
-        }
         world->w = 64;
         world->h = 64;
         world->pw = world->w * 8;
@@ -109,7 +97,8 @@ int world_init()
 void world_update()
 {
         tick++;
-        entity *player = ((entity **)world->actors->data)[0];
+        entity *player;
+        list_get(world->actors, 0, &player);
         if (btn_pressed(BTN_LEFT))
                 en_move_actor(player, -1, 0);
         if (btn_pressed(BTN_RIGHT))
@@ -155,7 +144,8 @@ void world_draw()
         const int x2 = MIN(pw, gfx_width());
         const int y2 = MIN(ph, gfx_height());
 
-        entity *player = ((entity **)world->actors->data)[0];
+        entity *player;
+        list_get(world->actors, 0, &player);
         gfx_rec_filled(player->x, player->y, player->w, player->h, 5);
 
         for (int y = 0; y < y2; y++) {
@@ -214,77 +204,4 @@ void set_pixels(int x, int y, int w, int h, uchar px)
 void add_pixel_flags(int x, int y, int w, int h, uchar px)
 {
         add_pixels_(world->pixels, world->pw, world->ph, x, y, w, h, px);
-}
-
-static entity *en_create()
-{
-        for (int n = 0; n < MAX_ENTITIES; n++) {
-                if (!entities_raw[n].active) {
-                        entity *e = &entities_raw[n];
-                        e->active = true;
-                        e->alive = true;
-                        e->jump_table = NULL;
-                        e->px = NULL;
-                        e->linked = NULL;
-                        e->action = 0;
-                        list_push(world->entities, &e);
-                        return e;
-                }
-        }
-        return NULL;
-}
-
-entity *en_create_actor()
-{
-        entity *e = en_create();
-        if (!e) {
-                return NULL;
-        }
-        list_push(world->actors, &e);
-        return e;
-}
-
-entity *en_create_solid(int w, int h)
-{
-        entity *e = en_create();
-        if (!e)
-                return NULL;
-        e->w = w;
-        e->h = h;
-        e->px = mem_alloc(w * h);
-        list_push(world->solids, &e);
-        return e;
-}
-
-void en_move_actor(entity *e, int dx, int dy)
-{
-        // potential optimization:
-        // only query for leading entity edge (moving direction)
-        // instead of a whole block
-
-        int move = ABS(dx);
-        int sx = SIGN(dx);
-        while (move-- > 0) {
-                uchar px = get_pixels(e->x + sx, e->y, e->w, e->h);
-                if (!(px & PX_SOLID)) {
-                        e->x += sx;
-                } else
-                        break;
-        }
-
-        move = ABS(dy);
-        int sy = SIGN(dy);
-        while (move-- > 0) {
-                uchar px = get_pixels(e->x, e->y + dy, e->w, e->h);
-                if (!(px & PX_SOLID)) {
-                        e->y += sy;
-                } else
-                        break;
-        }
-}
-
-// input x, y, w, h relative to map origin or entity?
-uchar en_get_pixels(entity *e, int x, int y, int w, int h)
-{
-        return get_pixels_(e->px, e->w, e->h, x, y, w, h);
 }

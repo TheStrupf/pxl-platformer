@@ -72,3 +72,19 @@ int list_find(list *l, void *p, bool (*c)(const void *, const void *))
         }
         return -1;
 }
+
+void list_pop(list *l, void *out)
+{
+        if (l->n == 0)
+                memset(out, 0, l->element_size);
+        list_get(l, l->n - 1, out);
+        list_del_at(l, l->n - 1);
+}
+
+void list_get(list *l, int i, void *out)
+{
+        if (i < l->n)
+                memcpy(out, (char *)l->data + i * l->element_size, l->element_size);
+        else
+                memset(out, 0, l->element_size);
+}

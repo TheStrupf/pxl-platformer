@@ -6,6 +6,7 @@
 
 #include "gfx.h"
 #include "input.h"
+#include "list.h"
 #include "mem.h"
 #include "raylib.h"
 #include "shared.h"
@@ -17,9 +18,6 @@
 
 int main(void)
 {
-#if CHAR_BIT != 8
-        return 1;
-#endif
         // custom allocator
         void *mem = malloc(MEMORY);
         if (!mem)

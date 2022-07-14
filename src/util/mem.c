@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MEM_USE_STDALLOC 1
+#define MEM_USE_STDALLOC 0
 
 #define ALIGN(s) ((s + ALIGNMENT - 1) & -ALIGNMENT)
 
