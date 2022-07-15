@@ -6,20 +6,37 @@ However, I probably won't include any other game assets besides the source code.
 ## Game idea
 The game will end up as some kind of Metroidvania. I'm thinking about a healthy mix of The Legend of Zelda: The Wind Waker, Ori and the Blind Forest and Celeste. I'm basically trying to make the game NES Zelda II should have been. We'll see how it goes.
 
+## Tools
+- Visual Studio Code
+- GCC compiler
+- Aseprite
+- Tiled Map Editor
+- Bfxr
+
+For Aseprite I'm using a [custom script](aseprite_export_indexed_json.lua) to export indexed images to a .json file. Aseprite palette: 0 = transparent index, 1 = first "regular" color. The script writes all indices to a long string of hex values: "255, 1, 31, ..." = "FF011 ...". However, all indices get reduces by 1 so the written index conforms to the *actual palette index* and the transparent index 0 becomes 255 = FF. Credits for the very first iteration: [community.aseprite.org/t/exporting-indices/5295](https://community.aseprite.org/t/exporting-indices/5295).
+
+I'll write a custom .json parser to load exported images and Tiled maps.
+
 ## Programming
 - C99 standard
-- Custom coded indexed software rendering (PICO-8 extended palette), final frame buffer pushed to OpenGL via Raylib
+- Custom coded indexed software rendering, final frame buffer pushed to OpenGL via Raylib
 
 ### Dependencies
+I'll try to keep the dependency on Raylib and other external libraries low.
+
+**External**
+
 - Raylib
+
+**Standard library**
+
 - stdlib.h
 - stdint.h
 - stdbool.h
 - stdio.h
 - string.h
 - float.h
-
-I'll try to keep the dependency on Raylib and other external libraries low.
+- math.h
 
 ### Building
 
