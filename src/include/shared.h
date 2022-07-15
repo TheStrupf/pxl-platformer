@@ -22,6 +22,10 @@ typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
+typedef unsigned long long ullong;
+typedef long long llong;
+
+typedef void (*func)();
 
 #define STREQ(a, b) (strcmp((a), (b)) == 0)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

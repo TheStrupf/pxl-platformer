@@ -1,6 +1,32 @@
 #include "util.h"
+#include "mem.h"
 #include "shared.h"
 #include <math.h>
+#include <stdio.h>
+
+char *read_txt(const char *filename)
+{
+        FILE *fptr = fopen(filename, "r");
+        if (!fptr) {
+                printf("Error opening txt\n");
+                return NULL;
+        }
+        fseek(fptr, 0, SEEK_END);
+        long length = ftell(fptr);
+        fseek(fptr, 0, SEEK_SET);
+        char *txt = mem_alloc(length + 1);
+        if (!txt) {
+                printf("Error allocating txt buffer\n");
+                fclose(fptr);
+                return NULL;
+        }
+        fread(txt, 1, length, fptr);
+        txt[length] = '\0';
+        fclose(fptr);
+        printf("read txt\n");
+        printf("%s\n", txt);
+        return txt;
+}
 
 u32 isqrt32(u32 x)
 {

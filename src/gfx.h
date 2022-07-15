@@ -92,4 +92,9 @@ void gfx_line(int x1, int y1, int x2, int y2, uchar col);
 void gfx_rec_filled(int x, int y, uint w, uint h, uchar col);
 void gfx_rec_outline(int x, int y, uint w, uint h, uchar col);
 
+uchar gfx_pal_get(uchar index);
+void gfx_pal_shift(int);
+void gfx_pal_set(uchar index, uchar col);
+void gfx_pal_reset();
+
 #endif

@@ -20,10 +20,4 @@ int list_find(list *, void *, bool (*c)(const void *, const void *));
 void list_pop(list *, void *);
 void list_get(list *, int, void *);
 
-// simple function for function pointer in list_find, list_del
-inline bool ptrsame(const void *a, const void *b)
-{
-        return a == b;
-}
-
 #endif

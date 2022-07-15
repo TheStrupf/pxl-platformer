@@ -87,28 +87,13 @@ void world_init()
         world->h = 64;
         world->pw = world->w * 8;
         world->ph = world->h * 8;
-        entity *player = en_create_actor();
-        player->x = 5;
-        player->y = 5;
-        player->w = 8;
-        player->h = 15;
+        en_hero();
         set_tile_pixels(10, 10, 1);
 }
 
 void world_update()
 {
         tick++;
-        entity *player;
-        list_get(world->actors, 0, &player);
-        if (btn_pressed(BTN_LEFT))
-                en_move_actor(player, -1, 0);
-        if (btn_pressed(BTN_RIGHT))
-                en_move_actor(player, 1, 0);
-        if (btn_pressed(BTN_UP))
-                en_move_actor(player, 0, -1);
-        if (btn_pressed(BTN_DOWN))
-                en_move_actor(player, 0, 1);
-
         entity **entities = world->entities->data;
         for (int n = 0; n < world->entities->n; n++) {
                 entity *e = entities[n];
@@ -139,11 +124,11 @@ static void world_draw_layer(int layer, int x1, int y1, int x2, int y2)
 
 void world_draw()
 {
-        int pw = world->pw;
-        int ph = world->ph;
-        uchar *px = world->pixels;
+        const int pw = world->pw;
+        const int ph = world->ph;
         const int x2 = MIN(pw, gfx_width());
         const int y2 = MIN(ph, gfx_height());
+        uchar *px = world->pixels;
 
         entity *player;
         list_get(world->actors, 0, &player);

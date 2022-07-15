@@ -6,10 +6,12 @@
 
 #include "gfx.h"
 #include "input.h"
+#include "jsonp.h"
 #include "list.h"
 #include "mem.h"
 #include "raylib.h"
 #include "shared.h"
+#include "util.h"
 #include "world.h"
 
 #define MEMORY MB(512)
@@ -17,7 +19,6 @@
 
 int main(void)
 {
-        // custom allocator
         void *mem = malloc(MEMORY);
         if (!mem)
                 return 1;
@@ -25,6 +26,35 @@ int main(void)
         mem_init(mem, MEMORY);
         gfx_init();
         world_init();
+
+        /* JSON TEST
+        {
+                "description": "The test case description",
+                "schema": { "type": "string" },
+                "tests": [
+                        {
+                        "description": "a test with a valid instance",
+                        "data": "a string",
+                        "valid": true
+                        },
+                        {
+                        "description": "a test with an invalid instance",
+                        "data": 15,
+                        "valid": false
+                        }
+                ]
+        }
+        */
+        char *jsontest = read_txt("test.json");
+        // char *jsontest = "{\"description\" : \" The test case description \", \"schema\" : {\"type\" : \"string\"}, \"tests\" : [ { \"description\" : \"a test with a valid instance\",\"data\" : \"a string\",\"valid\" : true},{\"description\" : \"a test with an invalid instance\",\"data\" : 15,\"valid\" : false}]}";
+        jsn toks[256];
+        if (json_parse(jsontest, toks, 256) == JSON_RET_SUCCESS) {
+                json_print_debug(jsontest, toks);
+        } else {
+                printf("Json error\n");
+        }
+
+        mem_free(jsontest);
 
         tex src = gfx_tex_create(64, 64);
         for (int n = 0; n < 64 * 64; n++)

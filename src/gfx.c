@@ -31,16 +31,18 @@ uchar pico_pal[128] = {
 #define BUFFER_WIDTH 512
 #define BUFFER_HEIGHT 512
 
-Texture2D ray_screentex;
-uchar *screenbuffer;
-tex screentex;
-tex target;
-int offsetx = 0;
-int offsety = 0;
+static Texture2D ray_screentex;
+static uchar *screenbuffer;
+static tex screentex;
+static tex target;
+static int offsetx = 0;
+static int offsety = 0;
+
+static uchar palette[256];
 
 // game width/height might become variable?
-int width = GAME_WIDTH;
-int height = GAME_HEIGHT;
+static int width = GAME_WIDTH;
+static int height = GAME_HEIGHT;
 
 void gfx_init()
 {
@@ -67,6 +69,7 @@ void gfx_begin()
         target = screentex;
         gfx_set_translation(0, 0);
         gfx_clear(0);
+        gfx_pal_reset();
 }
 
 void gfx_end()
@@ -173,6 +176,7 @@ void gfx_clear(uchar col)
 
 void gfx_px(int x, int y, uchar col)
 {
+        col = palette[col];
         if (col >= COL_TRANSPARENT)
                 return;
         x += offsetx;
@@ -244,7 +248,7 @@ void gfx_sprite(tex s, int x, int y, rec r, char flags)
                 const int cc = (yi << target.shift) + c1;
                 const int cz = yi * srcy + c2;
                 for (int xi = x1; xi < x2; xi++) {
-                        const uchar col = s.px[srcx * xi + cz];
+                        const uchar col = palette[s.px[srcx * xi + cz]];
                         if (col < COL_TRANSPARENT)
                                 target.px[xi + cc] = col;
                 }
@@ -258,13 +262,13 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
         p = v2_add(p, o);
         o.x += r.x;
         o.y += r.y;
-        int x2 = r.x + r.w;
-        int y2 = r.y + r.h;
-        m2 m_inv = m2_inv(m);
+        const int x2 = r.x + r.w;
+        const int y2 = r.y + r.h;
+        const m2 m_inv = m2_inv(m);
 
         // option 1: Loop over the whole target texture
         // inefficient for small textures
-#if 1
+#if 0
         const int dx1 = 0;
         const int dy1 = 0;
         const int dx2 = target.w;
@@ -329,7 +333,7 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
                         int spy = (int)(m_inv.m21 * dxt + c2);
                         if (spy < r.y || spy >= y2)
                                 continue;
-                        uchar col = s.px[spx + (spy << s.shift)];
+                        uchar col = palette[s.px[spx + (spy << s.shift)]];
                         if (col < COL_TRANSPARENT)
                                 target.px[dx + cc] = col;
                 }
@@ -339,6 +343,7 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
 // bresenham
 void gfx_line(int x1, int y1, int x2, int y2, uchar col)
 {
+        col = palette[col];
         if (col >= COL_TRANSPARENT)
                 return;
 
@@ -367,6 +372,7 @@ void gfx_line(int x1, int y1, int x2, int y2, uchar col)
 
 void gfx_rec_filled(int x, int y, uint w, uint h, uchar col)
 {
+        col = palette[col];
         if (col >= COL_TRANSPARENT)
                 return;
         x += offsetx;
@@ -398,4 +404,24 @@ void gfx_rec_outline(int x, int y, uint w, uint h, uchar col)
         gfx_line(x1, y1, x2, y1, col);
         gfx_line(x2, y1, x2, y2, col);
         gfx_line(x1, y2, x2, y2, col);
+}
+
+uchar gfx_pal_get(uchar index)
+{
+        return palette[index];
+}
+
+void gfx_pal_shift(int s)
+{
+}
+
+void gfx_pal_set(uchar index, uchar col)
+{
+        palette[index] = col;
+}
+
+void gfx_pal_reset()
+{
+        for (int n = 0; n < 256; n++)
+                palette[n] = n < COL_TRANSPARENT ? n : 255;
 }
