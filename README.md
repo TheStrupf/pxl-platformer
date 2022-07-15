@@ -40,3 +40,22 @@ For Aseprite I'm using a [custom script](https://github.com/TheStrupf/pxl-platfo
 
 ### Misc
 * Tiled Map Editor
+
+# Links of (personal) interest
+
+### Programming & Development
+* Using Rust For Game Development ([video](https://www.youtube.com/watch?v=aKLntZcp27M), [blog](https://kyren.github.io/2018/09/14/rustconf-talk.html)) - Catherine West
+* Celeste and TowerFall Physics ([blog](https://maddythorson.medium.com/celeste-and-towerfall-physics-d24bd2ae0fc5)) - Maddy Thorson
+* Semantic Compression ([blog](https://caseymuratori.com/blog_0015)) - Casey Muratori
+* Handmade Hero ([YT channel](https://www.youtube.com/c/MollyRocket) - Casey Muratori
+
+### Game Design & Art
+* Boss Keys ([video playlist](https://www.youtube.com/playlist?list=PLc38fcMFcV_ul4D6OChdWhsNsYY3NA5B2)) - Mark Brown (GMTK)
+* Android Arts: Zelda 1-3 ([blog](https://androidarts.com/zelda/Zelda.htm)) - Arne Niklas Jansson
+
+### Misc
+* TONC - GBA programming ([website](https://www.coranac.com/tonc/text/))
+* Super Mario 64 decompilation ([code](https://github.com/n64decomp/sm64))
+* The Legend of Zelda: The Minish Cap decompilation ([code](https://github.com/zeldaret/tmc))
+* Super NES features ([video playlist](https://www.youtube.com/playlist?list=PLHQ0utQyFw5KCcj1ljIhExH_lvGwfn6GV)) - Retro Game Mechanics Explained
+* Android Arts ([website](https://androidarts.com/)) - Arne Niklas Jansson
