@@ -1,8 +1,8 @@
 #include "gfx.h"
-#include "geo.h"
 #include "mem.h"
 #include "raylib.h"
 #include "shared.h"
+#include "util.h"
 
 // rgba values for the extended pico-8 palette
 // clang-format off
@@ -134,12 +134,22 @@ int gfx_height()
 tex gfx_tex_create(uint w, uint h)
 {
         tex t;
-        t.px = mem_alloc(w * h);
-        if (!t.px)
-                t.w = t.h = 0;
-        else {
+        t.w = 0;
+        t.h = 0;
+        t.iw = 1;
+        t.ih = 1;
+        t.shift = 0;
+        while (t.iw < w) {
+                t.iw <<= 1;
+                t.shift++;
+        }
+        while (t.ih < h)
+                t.ih <<= 1;
+        t.px = mem_alloc(t.iw * t.ih);
+        if (t.px) {
                 t.w = w;
                 t.h = h;
+                gfx_clear_tex(t, 0);
         }
         return t;
 }
@@ -153,7 +163,7 @@ void gfx_tex_destroy(tex t)
 void gfx_clear_tex(tex t, uchar col)
 {
         if (t.px)
-                memset(t.px, col, t.w * t.h);
+                memset(t.px, col, t.iw * t.ih);
 }
 
 void gfx_clear(uchar col)
@@ -168,7 +178,7 @@ void gfx_px(int x, int y, uchar col)
         x += offsetx;
         y += offsety;
         if ((uint)x < target.w && (uint)y < target.h)
-                target.px[x + y * target.w] = col;
+                target.px[x + (y << target.shift)] = col;
 }
 
 void gfx_sprite(tex s, int x, int y, rec r, char flags)
@@ -224,16 +234,104 @@ void gfx_sprite(tex s, int x, int y, rec r, char flags)
         y += offsety;
         const int x1 = MAX(0, -x);
         const int y1 = MAX(0, -y);
-        const int x2 = MIN((flags & SPR_FLAG_D) > 0 ? r.h : r.w, target.w - x);
-        const int y2 = MIN((flags & SPR_FLAG_D) > 0 ? r.w : r.h, target.h - y);
+        const int x2 = MIN((flags & SPR_FLAG_D) ? r.h : r.w, target.w - x);
+        const int y2 = MIN((flags & SPR_FLAG_D) ? r.w : r.h, target.h - y);
+        const int c1 = x + (y << target.shift);
+        const int c2 = r.x + xa + ((r.y + ya) << s.shift);
 
+        // Loops over target area and maps back to source pixel
         for (int yi = y1; yi < y2; yi++) {
-                const int cc = (yi * target.w) + x + (y * target.w);
-                const int cz = yi * srcy + r.x + xa + ((r.y + ya) * s.w);
+                const int cc = (yi << target.shift) + c1;
+                const int cz = yi * srcy + c2;
                 for (int xi = x1; xi < x2; xi++) {
                         const uchar col = s.px[srcx * xi + cz];
                         if (col < COL_TRANSPARENT)
                                 target.px[xi + cc] = col;
+                }
+        }
+}
+
+void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
+{
+        p.x += offsetx;
+        p.y += offsety;
+        p = v2_add(p, o);
+        o.x += r.x;
+        o.y += r.y;
+        int x2 = r.x + r.w;
+        int y2 = r.y + r.h;
+        m2 m_inv = m2_inv(m);
+
+        // option 1: Loop over the whole target texture
+        // inefficient for small textures
+#if 1
+        const int dx1 = 0;
+        const int dy1 = 0;
+        const int dx2 = target.w;
+        const int dy2 = target.h;
+
+#else
+        // option 2: Calculate AABB rectangle by transforming
+        // the rectangle's four corners and calculating
+        // the min/max for the x & and y axis
+
+        // source texture
+        // a---b
+        // |   |
+        // c---d
+
+        // transform point a
+        v2 t = (v2){r.x - 1, r.y - 1};
+        t = v2_add(t, m2_v2_mul(m_inv, p));
+        t = v2_sub(t, o);
+        v2 v = m2_v2_mul(m, t);
+        v2 p1 = v;
+        v2 p2 = v;
+
+        // transform point c
+        t.y += r.h + 2;
+        v = m2_v2_mul(m, t);
+        p1 = v2_min(p1, v);
+        p2 = v2_max(p2, v);
+
+        // transform point d
+        t.x += r.w + 2;
+        v = m2_v2_mul(m, t);
+        p1 = v2_min(p1, v);
+        p2 = v2_max(p2, v);
+
+        // transform point b
+        t.y -= r.h + 2;
+        v = m2_v2_mul(m, t);
+        p1 = v2_min(p1, v);
+        p2 = v2_max(p2, v);
+
+        // calculate target area
+        const int dx1 = MAX((int)(p1.x - 1), 0);
+        const int dy1 = MAX((int)(p1.y - 1), 0);
+        const int dx2 = MIN((int)(p2.x + 1), target.w);
+        const int dy2 = MIN((int)(p2.y + 1), target.h);
+#endif
+        // loop over target area and map
+        // each SCREEN pixel back to a SOURCE pixel
+        for (int dy = dy1; dy < dy2; dy++) {
+                const float dyt = dy - p.y + 0.5f; // rounding - midpoint of screen pixel
+                const float c1 = m_inv.m12 * dyt + o.x;
+                const float c2 = m_inv.m22 * dyt + o.y;
+                const int cc = dy << target.shift;
+                for (int dx = dx1; dx < dx2; dx++) {
+                        float dxt = dx - p.x + 0.5f;
+                        // calculate if calculated source pixel is
+                        // inside the specified source rectangle
+                        int spx = (int)(m_inv.m11 * dxt + c1);
+                        if (spx < r.x || spx >= x2)
+                                continue;
+                        int spy = (int)(m_inv.m21 * dxt + c2);
+                        if (spy < r.y || spy >= y2)
+                                continue;
+                        uchar col = s.px[spx + (spy << s.shift)];
+                        if (col < COL_TRANSPARENT)
+                                target.px[dx + cc] = col;
                 }
         }
 }
@@ -254,7 +352,7 @@ void gfx_line(int x1, int y1, int x2, int y2, uchar col)
         int yi = y1 + offsety;
         for (int n = 0; n <= steps; n++) {
                 if ((uint)xi < target.w && (uint)yi < target.h)
-                        target.px[xi + (yi * target.w)] = col;
+                        target.px[xi + (yi << target.shift)] = col;
                 int e2 = err << 1;
                 if (e2 >= dy) {
                         err += dy;
@@ -277,11 +375,17 @@ void gfx_rec_filled(int x, int y, uint w, uint h, uchar col)
         const int y1 = MAX(y, 0);
         const int x2 = MIN(x + (int)w, target.w);
         const int y2 = MIN(y + (int)h, target.h);
-        for (int ty = y1; ty < y2; ty++) {
-                const int c = ty * target.w;
-                for (int tx = x1; tx < x2; tx++)
-                        target.px[tx + c] = col;
+#if 1
+        const int l = x2 - x1;
+        for (int yi = y1; yi < y2; yi++)
+                memset(&target.px[x1 + (yi << target.shift)], col, l);
+#else
+        for (int yi = y1; yi < y2; yi++) {
+                const int c = yi << target.shift;
+                for (int xi = x1; xi < x2; xi++)
+                        target.px[xi + c] = col;
         }
+#endif
 }
 
 void gfx_rec_outline(int x, int y, uint w, uint h, uchar col)

@@ -1,10 +1,12 @@
 #include "world.h"
 #include "entity.h"
-#include "geo.h"
+#include "gfx.h"
 #include "input.h"
 #include "mem.h"
 #include "shared.h"
+#include "util.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 uint tick;
 game_world *world;
@@ -56,8 +58,7 @@ static void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uc
         const int y2 = MIN(y + h, ph);
         for (int y = y1; y < y2; y++) {
                 const int c = y * pw;
-                for (int x = x1; x < x2; x++)
-                        p[x + c] = pixel;
+                memset(&p[x1 + c], pixel, x2 - x1);
         }
 }
 
@@ -74,7 +75,7 @@ static void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uc
         }
 }
 
-int world_init()
+void world_init()
 {
         tick = 0;
         world = mem_alloc(sizeof(game_world));

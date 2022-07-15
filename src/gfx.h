@@ -1,8 +1,8 @@
 #ifndef GFX_H
 #define GFX_H
 
-#include "geo.h"
 #include "shared.h"
+#include "util.h"
 
 // Pico-8 color palette
 // Color names adopted from
@@ -56,6 +56,9 @@ enum sprite_flags {
 typedef struct tex {
         ushort w;
         ushort h;
+        ushort iw;   // internal width pow2
+        ushort ih;   // internal height pow2
+        uchar shift; // "<< shift" = "* w"
         uchar *px;
 } tex;
 
@@ -84,6 +87,7 @@ void gfx_px(int x, int y, uchar col);
 // 100: Flip Diagonal
 // Idea: doc.mapeditor.org/en/stable/reference/global-tile-ids/#tile-flipping
 void gfx_sprite(tex s, int x, int y, rec r, char flags);
+void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m);
 void gfx_line(int x1, int y1, int x2, int y2, uchar col);
 void gfx_rec_filled(int x, int y, uint w, uint h, uchar col);
 void gfx_rec_outline(int x, int y, uint w, uint h, uchar col);

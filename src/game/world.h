@@ -1,7 +1,6 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include "gfx.h"
 #include "list.h"
 #include "shared.h"
 
@@ -48,7 +47,7 @@ extern game_world *world;
 // maddythorson.medium.com/celeste-and-towerfall-physics-d24bd2ae0fc5
 // Had a good experience with that in that past as well
 
-int world_init();
+void world_init();
 void world_update();
 void world_draw();
 
