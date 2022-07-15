@@ -1,3 +1,8 @@
+**2022.07.15a**
+- Added math functions - integer square root, matrix 2x2 (float) and 2D vector (float)
+- Added an affine sprite method - sprite shearing, scaling and rotation
+- All textures are now pow2 sized internally to replace "* width" with "<< shift" for a minor performance boost
+
 **2022.07.14d**
 - Related to previous: Added a variant of list_get(list*, int, void*) using memcpy. Not as user-friendly as I would like but it does the job.
 - Pulled the entity specific part out of world.h/.c
