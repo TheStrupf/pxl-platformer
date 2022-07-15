@@ -1,3 +1,9 @@
+**2022.07.16a**
+- Added text file reader
+- Added entity inheritance
+- Added gfx palette
+- Added custom token-based json parser
+
 **2022.07.15a**
 - Added math functions - integer square root, matrix 2x2 (float) and 2D vector (float)
 - Added an affine sprite method - sprite shearing, scaling and rotation
