@@ -1,3 +1,8 @@
+**2022.07.16b**
+- Get pixels of solid entities
+- json: var naming fix
+- json: allow trailing commas
+
 **2022.07.16a**
 - Added text file reader
 - Added entity inheritance
