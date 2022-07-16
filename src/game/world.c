@@ -35,46 +35,6 @@ uchar tile_collision_masks[64 * 2] = {
 };
 // clang-format on
 
-static uchar get_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h)
-{
-        const int x1 = MAX(x, 0);
-        const int y1 = MAX(y, 0);
-        const int x2 = MIN(x + w, pw);
-        const int y2 = MIN(y + h, ph);
-        uchar px = 0;
-        for (int yi = y1; yi < y2; yi++) {
-                const int c = yi * pw;
-                for (int xi = x1; xi < x2; xi++)
-                        px |= p[xi + c];
-        }
-        return px;
-}
-
-static void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
-{
-        const int x1 = MAX(x, 0);
-        const int y1 = MAX(y, 0);
-        const int x2 = MIN(x + w, pw);
-        const int y2 = MIN(y + h, ph);
-        for (int y = y1; y < y2; y++) {
-                const int c = y * pw;
-                memset(&p[x1 + c], pixel, x2 - x1);
-        }
-}
-
-static void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
-{
-        const int x1 = MAX(x, 0);
-        const int y1 = MAX(y, 0);
-        const int x2 = MIN(x + w, pw);
-        const int y2 = MIN(y + h, ph);
-        for (int y = y1; y < y2; y++) {
-                const int c = y * pw;
-                for (int x = x1; x < x2; x++)
-                        p[x + c] |= pixel;
-        }
-}
-
 void world_init()
 {
         tick = 0;
@@ -168,26 +128,24 @@ void set_tile_pixels(int tx, int ty, int collID)
 
 uchar get_pixels(int x, int y, int w, int h)
 {
-        uchar px = get_pixels_(world->pixels, world->pw, world->ph,
-                               x, y, w, h);
-        rec rmap = (rec){x, y, w, h};
-        rec r;
+        uchar p = get_pixels_(world->pixels, world->pw, world->ph,
+                              x, y, w, h);
         entity **solids = world->solids->data;
         for (int n = 0; n < world->solids->n; n++) {
                 entity *e = solids[n];
-                if (e->collidable &&
-                    try_rec_intersection(rmap, (rec){e->x, e->y, e->w, e->h}, &r))
-                        px |= en_get_pixels(e, r.x, r.y, r.w, r.h);
+                p |= en_get_pixels(e, x - e->x, y - e->y, w, h);
         }
-        return px;
+        return p;
 }
 
 void set_pixels(int x, int y, int w, int h, uchar px)
 {
-        set_pixels_(world->pixels, world->pw, world->ph, x, y, w, h, px);
+        set_pixels_(world->pixels, world->pw, world->ph,
+                    x, y, w, h, px);
 }
 
 void add_pixel_flags(int x, int y, int w, int h, uchar px)
 {
-        add_pixels_(world->pixels, world->pw, world->ph, x, y, w, h, px);
+        add_pixels_(world->pixels, world->pw, world->ph,
+                    x, y, w, h, px);
 }

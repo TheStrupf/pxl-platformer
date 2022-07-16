@@ -2,6 +2,7 @@
 #include "list.h"
 #include "mem.h"
 #include "shared.h"
+#include "util.h"
 #include "world.h"
 
 // entity with additional padding
@@ -58,7 +59,8 @@ void en_move_actor(entity *e, int dx, int dy)
         // only query for leading entity edge (moving direction)
         // instead of a whole block
 
-        int move = ABS(dx);
+        int move;
+        move = ABS(dx);
         int sx = SIGN(dx);
         while (move-- > 0) {
                 uchar px = get_pixels(e->x + sx, e->y, e->w, e->h);
@@ -82,6 +84,7 @@ void en_move_actor(entity *e, int dx, int dy)
 // input x, y, w, h relative to map origin or entity?
 uchar en_get_pixels(entity *e, int x, int y, int w, int h)
 {
-        return 0;
-        // return get_pixels_(e->px, e->w, e->h, x, y, w, h);
+        if (!e->collidable)
+                return 0;
+        return get_pixels_(e->px, e->w, e->h, x, y, w, h);
 }

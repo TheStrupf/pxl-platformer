@@ -26,7 +26,7 @@ static jsn *newtok(int type)
 
         // find parent
         jsn *parent = NULL;
-        if (link_key_value) {
+        if (!link_key_value) {
 
                 // walk up the tree to find the next higher object
                 for (int n = spos - 1; n >= 0; n--) {
@@ -39,7 +39,7 @@ static jsn *newtok(int type)
         } else {
                 // key : value pair
                 // parent = most recent token
-                link_key_value = true; // reset
+                link_key_value = false; // reset
                 parent = &toks[curr_tok - 1];
         }
 
@@ -60,7 +60,7 @@ int json_parse(char *s, jsn *tokens, int num_tok)
 {
         json = s;
         toks = tokens;
-        link_key_value = true;
+        link_key_value = false;
         curr_tok = -1;
         jsn *tok;
         spos = 0;
@@ -94,10 +94,11 @@ int json_parse(char *s, jsn *tokens, int num_tok)
                         break;
                 case '}':
                 case ']':
+                        link_key_value = false;
                         stack[--spos]->end = i;
                         break;
                 case ':':
-                        link_key_value = false;
+                        link_key_value = true;
                         break;
                 case '\"':
                         tok = newtok(JSON_STR);

@@ -25,6 +25,10 @@ typedef struct v2 {
 
 char *read_txt(const char *);
 
+uchar get_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h);
+void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel);
+void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel);
+
 bool try_rec_intersection(rec a, rec b, rec *r);
 rec rec_intersection(rec, rec);
 bool rec_overlap(rec, rec);

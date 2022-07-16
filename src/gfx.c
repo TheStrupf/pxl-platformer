@@ -109,7 +109,7 @@ void gfx_show()
         ClearBackground(WHITE);
         DrawTexturePro(ray_screentex,
                        (Rectangle){0, 0, width, height},
-                       (Rectangle){tx, ty, gw + 0.5f, gh + 0.5f},
+                       (Rectangle){tx, ty, gw + 0.5, gh + 0.5},
                        (Vector2){0, 0}, 0, WHITE);
         EndDrawing();
 }
@@ -273,7 +273,6 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
         const int dy1 = 0;
         const int dx2 = target.w;
         const int dy2 = target.h;
-
 #else
         // option 2: Calculate AABB rectangle by transforming
         // the rectangle's four corners and calculating

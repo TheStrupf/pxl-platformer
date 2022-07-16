@@ -6,11 +6,11 @@
 typedef struct list {
         int cap;
         int n;
-        size_t element_size;
+        size_t esize;
         void *data;
 } list;
 
-list *list_create_sized(int cap, size_t element_size);
+list *list_create_sized(int cap, size_t esize);
 void list_push(list *, void *);
 void list_set(list *, void *, int);
 void list_del_at(list *, int);

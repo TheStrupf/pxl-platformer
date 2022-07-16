@@ -28,6 +28,46 @@ char *read_txt(const char *filename)
         return txt;
 }
 
+uchar get_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h)
+{
+        const int x1 = MAX(x, 0);
+        const int y1 = MAX(y, 0);
+        const int x2 = MIN(x + w, pw);
+        const int y2 = MIN(y + h, ph);
+        uchar px = 0;
+        for (int yi = y1; yi < y2; yi++) {
+                const int c = yi * pw;
+                for (int xi = x1; xi < x2; xi++)
+                        px |= p[xi + c];
+        }
+        return px;
+}
+
+void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
+{
+        const int x1 = MAX(x, 0);
+        const int y1 = MAX(y, 0);
+        const int x2 = MIN(x + w, pw);
+        const int y2 = MIN(y + h, ph);
+        for (int y = y1; y < y2; y++) {
+                const int c = y * pw;
+                memset(&p[x1 + c], pixel, x2 - x1);
+        }
+}
+
+void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
+{
+        const int x1 = MAX(x, 0);
+        const int y1 = MAX(y, 0);
+        const int x2 = MIN(x + w, pw);
+        const int y2 = MIN(y + h, ph);
+        for (int y = y1; y < y2; y++) {
+                const int c = y * pw;
+                for (int x = x1; x < x2; x++)
+                        p[x + c] |= pixel;
+        }
+}
+
 u32 isqrt32(u32 x)
 {
         u32 r = x, q = 0, b = ((u32)1) << 30;

@@ -2,18 +2,18 @@
 #include "mem.h"
 #include "shared.h"
 
-list *list_create_sized(int cap, size_t element_size)
+list *list_create_sized(int cap, size_t esize)
 {
         void *memptr = mem_alloc(sizeof(list));
         if (memptr) {
-                void *memptr2 = mem_alloc(element_size * cap);
+                void *memptr2 = mem_alloc(esize * cap);
                 if (!memptr2) {
                         mem_free(memptr);
                         return NULL;
                 }
                 list *l = memptr;
                 l->data = memptr2;
-                l->element_size = element_size;
+                l->esize = esize;
                 l->n = 0;
                 l->cap = cap;
                 return l;
@@ -24,7 +24,7 @@ list *list_create_sized(int cap, size_t element_size)
 void list_push(list *l, void *p)
 {
         if (l->n == l->cap) {
-                void *temp = mem_realloc(l->data, l->element_size * l->cap * 2);
+                void *temp = mem_realloc(l->data, l->esize * l->cap * 2);
                 if (!temp)
                         return;
                 l->cap *= 2;
@@ -35,7 +35,7 @@ void list_push(list *l, void *p)
 
 void list_set(list *l, void *p, int i)
 {
-        memcpy((char *)l->data + i * l->element_size, p, l->element_size);
+        memcpy((char *)l->data + i * l->esize, p, l->esize);
 }
 
 void list_del_at(list *l, int i)
@@ -44,9 +44,9 @@ void list_del_at(list *l, int i)
                 return;
         if (--l->n > 0)
                 memmove(
-                    (char *)l->data + i * l->element_size,
-                    (char *)l->data + (i + 1) * l->element_size,
-                    l->element_size * (l->n - i));
+                    (char *)l->data + i * l->esize,
+                    (char *)l->data + (i + 1) * l->esize,
+                    l->esize * (l->n - i));
 }
 
 void list_del(list *l, void *p, bool (*c)(const void *, const void *))
@@ -68,7 +68,7 @@ int list_find(list *l, void *p, bool (*c)(const void *, const void *))
         for (int n = 0; n < l->n; n++) {
                 if (c(p, (void *)it))
                         return n;
-                it += l->element_size;
+                it += l->esize;
         }
         return -1;
 }
@@ -76,7 +76,7 @@ int list_find(list *l, void *p, bool (*c)(const void *, const void *))
 void list_pop(list *l, void *out)
 {
         if (l->n == 0)
-                memset(out, 0, l->element_size);
+                memset(out, 0, l->esize);
         list_get(l, l->n - 1, out);
         list_del_at(l, l->n - 1);
 }
@@ -84,7 +84,7 @@ void list_pop(list *l, void *out)
 void list_get(list *l, int i, void *out)
 {
         if (i < l->n)
-                memcpy(out, (char *)l->data + i * l->element_size, l->element_size);
+                memcpy(out, (char *)l->data + i * l->esize, l->esize);
         else
-                memset(out, 0, l->element_size);
+                memset(out, 0, l->esize);
 }
