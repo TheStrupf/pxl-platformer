@@ -1,7 +1,7 @@
 # About
 I'm documenting my coding journey of writing a retro platformer from scratch in C, heavily inspired by Handmade Hero (Casey Muratori) and [Raylib](https://www.raylib.com/). I'm originally coming from C# so coding in C is new to me. But I still feel pretty confident about this. I'll figure things out on the run. However, I probably won't include any other game assets besides the source code.
 
-[version_notes](version_notes.md) will contain a TL;DR for every code update.
+A [changelog](version_notes.md) will contain a TL;DR for every code update.
 
 ### Game concept
 
@@ -27,7 +27,7 @@ Besides the base library for images, sound and input most things will be coded f
 * Bfxr
 * Tiled Map Editor
 
-For Aseprite I'm using a [custom script](https://github.com/TheStrupf/pxl-platformer/blob/main/aseprite_export_indexed_json.lua) to export indexed images to a .json file. Aseprite palette: 0 = transparent index, 1 = first "regular" color. The script writes all indices to a long string of hex values: "255, 1, 31, ..." = "FF011 ...". However, all indices get reduces by 1 so the written index conforms to the actual palette index and the transparent index 0 becomes 255 = FF. Credits for the very first iteration: [community.aseprite.org/t/exporting-indices/5295](https://community.aseprite.org/t/exporting-indices/5295).
+For Aseprite I'm using a [custom script](https://github.com/TheStrupf/pxl-platformer/blob/main/misc/aseprite_export_indexed_json.lua) to export indexed images to a .json file. Aseprite palette: 0 = transparent index, 1 = first "regular" color. The script writes all indices to a long string of hex values: "255, 1, 31, ..." = "FF011 ...". However, all indices get reduces by 1 so the written index conforms to the actual palette index and the transparent index 0 becomes 255 = FF. Credits for the very first iteration: [community.aseprite.org/t/exporting-indices/5295](https://community.aseprite.org/t/exporting-indices/5295).
 
 # Links of interest
 
