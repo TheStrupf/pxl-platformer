@@ -36,6 +36,7 @@ For Aseprite I'm using a [custom script](https://github.com/TheStrupf/pxl-platfo
 * Celeste and TowerFall Physics ([blog](https://maddythorson.medium.com/celeste-and-towerfall-physics-d24bd2ae0fc5)) - Maddy Thorson
 * Semantic Compression ([blog](https://caseymuratori.com/blog_0015)) - Casey Muratori
 * Handmade Hero ([YT channel](https://www.youtube.com/c/MollyRocket) - Casey Muratori
+* Bit Twiddling Hacks ([website](https://graphics.stanford.edu/~seander/bithacks.html)) - Sean Eron Anderson
 
 ### Game Design & Art
 * Boss Keys ([video playlist](https://www.youtube.com/playlist?list=PLc38fcMFcV_ul4D6OChdWhsNsYY3NA5B2)) - Mark Brown (GMTK)
