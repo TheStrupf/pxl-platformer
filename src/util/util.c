@@ -49,10 +49,8 @@ void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pix
         const int y1 = MAX(y, 0);
         const int x2 = MIN(x + w, pw);
         const int y2 = MIN(y + h, ph);
-        for (int y = y1; y < y2; y++) {
-                const int c = y * pw;
-                memset(&p[x1 + c], pixel, x2 - x1);
-        }
+        for (int y = y1; y < y2; y++)
+                memset(&p[x1 + y * pw], pixel, x2 - x1);
 }
 
 void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
@@ -222,57 +220,4 @@ m2 m2_aff_shr(float x, float y)
 float m2_det(m2 a)
 {
         return a.m11 * a.m22 - a.m21 * a.m12;
-}
-
-v2 v2_add(v2 a, v2 b)
-{
-        v2 r;
-        r.x = a.x + b.x;
-        r.y = a.y + b.y;
-        return r;
-}
-
-v2 v2_sub(v2 a, v2 b)
-{
-        v2 r;
-        r.x = a.x - b.x;
-        r.y = a.y - b.y;
-        return r;
-}
-
-v2 v2_scl(v2 a, float s)
-{
-        v2 r;
-        r.x = a.x * s;
-        r.y = a.y * s;
-        return r;
-}
-
-float v2_dot(v2 a, v2 b)
-{
-        return a.x * b.x + a.y + b.y;
-}
-
-v2 m2_v2_mul(m2 m, v2 v)
-{
-        v2 r;
-        r.x = m.m11 * v.x + m.m12 * v.y;
-        r.y = m.m21 * v.x + m.m22 * v.y;
-        return r;
-}
-
-v2 v2_min(v2 a, v2 b)
-{
-        v2 r;
-        r.x = MIN(a.x, b.x);
-        r.y = MIN(a.y, b.y);
-        return r;
-}
-
-v2 v2_max(v2 a, v2 b)
-{
-        v2 r;
-        r.x = MAX(a.x, b.x);
-        r.y = MAX(a.y, b.y);
-        return r;
 }

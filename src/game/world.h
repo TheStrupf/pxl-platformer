@@ -3,9 +3,17 @@
 
 #include "list.h"
 #include "shared.h"
+#include "util.h"
 
 #define NUM_LAYERS 4
 #define NUM_TILES (512 * 512)
+
+typedef struct cam {
+        rec r;
+        v2i vel;
+        bool lock_x;
+        bool lock_y;
+} cam;
 
 // a pixel (uchar) is bitmask of properties
 enum pixel_flags {
@@ -31,6 +39,8 @@ typedef struct game_world {
         uint pw;
         uint ph;
 
+        cam cam;
+
         list *entities; // entity*
         list *actors;   // entity*
         list *solids;   // entity*
@@ -50,6 +60,8 @@ extern game_world *world;
 void world_init();
 void world_update();
 void world_draw();
+
+void cam_center(int x, int y);
 
 void set_tile_pixels(int tx, int ty, int collID);
 uchar get_pixels(int x, int y, int w, int h);

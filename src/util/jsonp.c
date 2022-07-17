@@ -26,8 +26,12 @@ static jsn *newtok(int type)
 
         // find parent
         jsn *parent = NULL;
-        if (!link_key_value) {
-
+        if (link_key_value) {
+                // key : value pair
+                // parent = most recent token
+                link_key_value = false; // reset
+                parent = &toks[curr_tok - 1];
+        } else {
                 // walk up the tree to find the next higher object
                 for (int n = spos - 1; n >= 0; n--) {
                         jsn *temp = stack[n];
@@ -36,11 +40,6 @@ static jsn *newtok(int type)
                                 break;
                         }
                 }
-        } else {
-                // key : value pair
-                // parent = most recent token
-                link_key_value = false; // reset
-                parent = &toks[curr_tok - 1];
         }
 
         if (parent) {

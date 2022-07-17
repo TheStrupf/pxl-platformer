@@ -27,12 +27,24 @@ typedef long long llong;
 
 typedef void (*func)();
 
+#define DEBUG 3
+#if defined(DEBUG) && DEBUG > 0
+#define PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
+                                    __FILE__, __LINE__, __func__, ##args)
+#else
+#define PRINT(fmt, args...) /* Don't do anything in release builds */
+#endif
+
 #define STREQ(a, b) (strcmp((a), (b)) == 0)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABS(a) ((a) > 0 ? (a) : -(a))
 #define COMP(a, b) (((a) < (b)) - ((a) > (b)))
 #define SIGN(a) COMP(0, a)
+
+// fast min/max on ints
+// r = y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
+// r = x - ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // max(x, y)
 
 // BINARY LITERALS in native C without GCC extension
 // Credits: stackoverflow.com/a/7577517

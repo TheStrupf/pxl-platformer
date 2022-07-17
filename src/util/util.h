@@ -23,6 +23,11 @@ typedef struct v2 {
         float y;
 } v2;
 
+typedef struct v2i {
+        int x;
+        int y;
+} v2i;
+
 char *read_txt(const char *);
 
 uchar get_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h);
@@ -42,14 +47,13 @@ m2 m2_inv(m2);
 m2 m2_aff_rot(float);
 m2 m2_aff_scl(float x, float y);
 m2 m2_aff_shr(float x, float y);
-
 float m2_det(m2 a);
-v2 v2_add(v2 a, v2 b);
-v2 v2_sub(v2 a, v2 b);
-v2 v2_scl(v2 a, float s);
-float v2_dot(v2 a, v2 b);
-v2 m2_v2_mul(m2 m, v2 v);
-v2 v2_min(v2 a, v2 b);
-v2 v2_max(v2 a, v2 b);
 
+#define M2V2_MUL(m, v) ((v2){m.m11 * v.x + m.m12 * v.y, m.m21 * v.x + m.m22 * v.y})
+#define V2_ADD(a, b) ((v2){a.x + b.x, a.y + b.y})
+#define V2_SUB(a, b) ((v2){a.x - b.x, a.y - b.y})
+#define V2_SCL(a, s) ((v2){a.x * s, a.y * s})
+#define V2_MIN(a, b) ((v2){MIN(a.x, b.x), MIN(a.y, b.y)})
+#define V2_MAX(a, b) ((v2){MAX(a.x, b.x), MAX(a.y, b.y)})
+#define V2_DOT(a, b) (a.x * b.x + a.y + b.y)
 #endif

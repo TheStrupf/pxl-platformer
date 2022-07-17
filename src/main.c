@@ -11,8 +11,10 @@
 #include "mem.h"
 #include "raylib.h"
 #include "shared.h"
+#include "snd.h"
 #include "util.h"
 #include "world.h"
+#include <time.h>
 
 #define MEMORY MB(512)
 #define DT (1.0 / FPS)
@@ -25,6 +27,10 @@ int main(void)
         memset(mem, 0, MEMORY);
         mem_init(mem, MEMORY);
         gfx_init();
+        snd_init();
+
+        int jumpsnd = snd_load("assets/snd/jump.wav");
+
         world_init();
 
         /* JSON TEST
@@ -51,7 +57,7 @@ int main(void)
         if (json_parse(jsontest, toks, 256) == JSON_RET_SUCCESS) {
                 json_print_debug(jsontest, toks);
         } else {
-                printf("Json error\n");
+                PRINT("Json error\n");
         }
 
         mem_free(jsontest);
@@ -76,8 +82,9 @@ int main(void)
                 lasttime = time;
 
                 // cap delta accumulator ("spiral of death")
-                acc = MAX(acc, 0.1);
+                acc = MIN(acc, 0.1);
                 if (acc >= DT) {
+                        int loopruns = 0;
                         do {
                                 if (btn_pressed(BTN_UP))
                                         sclx += S;
@@ -103,7 +110,11 @@ int main(void)
                                 btn_update();
                                 world_update();
                                 acc -= DT;
+                                loopruns++;
                         } while (acc >= DT);
+
+                        if (loopruns > 1)
+                                printf("Skipped %i frames\n", loopruns - 1);
 
                         gfx_begin();
                         world_draw();
@@ -122,6 +133,8 @@ int main(void)
                 }
                 gfx_show();
         }
+        snd_destroy();
+        gfx_destroy();
         free(mem);
         return 0;
 }

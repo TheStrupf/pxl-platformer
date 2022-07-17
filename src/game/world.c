@@ -47,6 +47,8 @@ void world_init()
         world->h = 64;
         world->pw = world->w * 8;
         world->ph = world->h * 8;
+        world->cam.r.w = gfx_width();
+        world->cam.r.h = gfx_height();
         en_hero();
         set_tile_pixels(10, 10, 1);
 }
@@ -59,6 +61,12 @@ void world_update()
                 entity *e = entities[n];
                 if (e->jump_table)
                         e->jump_table[e->action](e);
+                // fixed point
+                e->move_q8.x += (e->vel_q12.x >> 4);
+                e->move_q8.y += (e->vel_q12.y >> 4);
+                en_move(e, e->move_q8.x >> 8, e->move_q8.y >> 8);
+                e->move_q8.x &= 0xFF;
+                e->move_q8.y &= 0xFF;
         }
 
         for (int n = world->entities->n - 1; n >= 0; n--) {
@@ -92,7 +100,15 @@ void world_draw()
 
         entity *player;
         list_get(world->actors, 0, &player);
-        gfx_rec_filled(player->x, player->y, player->w, player->h, 5);
+        cam_center(player->r.x, player->r.y);
+
+        const int tx1 = MAX(world->cam.r.x / 8 - 1, 0);
+        const int ty1 = MAX(world->cam.r.y / 8 - 1, 0);
+        const int tx2 = MIN((world->cam.r.x + world->cam.r.w) / 8 + 1, world->w);
+        const int ty2 = MIN((world->cam.r.y + world->cam.r.h) / 8 + 1, world->h);
+        world_draw_layer(0, tx1, ty1, tx2, ty2);
+
+        gfx_rec_filled(player->r.x, player->r.y, player->r.w, player->r.h, 5);
 
         for (int y = 0; y < y2; y++) {
                 for (int x = 0; x < x2; x++) {
@@ -108,19 +124,37 @@ void world_draw()
         }
 }
 
+void cam_center(int x, int y)
+{
+        cam *c = &world->cam;
+        if (!c->lock_x) {
+                c->r.x = x - c->r.w / 2;
+                if (c->r.x < 0)
+                        c->r.x = 0;
+                if (c->r.x + c->r.w >= world->pw)
+                        c->r.x = world->pw - c->r.w;
+        }
+
+        if (!c->lock_y) {
+                c->r.y = y - c->r.h / 2;
+                if (c->r.y < 0)
+                        c->r.y = 0;
+                if (c->r.y + c->r.h >= world->ph)
+                        c->r.y = world->ph - c->r.h;
+        }
+}
+
 void set_tile_pixels(int tx, int ty, int collID)
 {
-        // out of bounds check using uint conversion
-        // negative number to unsigned int -> really large
         if ((uint)tx >= world->w || (uint)ty >= world->h)
                 return;
         world->tiles[tx + ty * world->w] = collID;
+
         // pointers to the left most pixel coloumn of the tile/mask
         char *wptr = (char *)(&world->pixels[tx * 8 + ty * 8 * world->pw]);
         char *tptr = (char *)(&tile_collision_masks[collID * 64]);
         for (int i = 0; i < 8; i++) {
                 memcpy(wptr, tptr, 8);
-                // incr pointer by one row ("y++")
                 tptr += 8;
                 wptr += world->pw;
         }
@@ -133,7 +167,7 @@ uchar get_pixels(int x, int y, int w, int h)
         entity **solids = world->solids->data;
         for (int n = 0; n < world->solids->n; n++) {
                 entity *e = solids[n];
-                p |= en_get_pixels(e, x - e->x, y - e->y, w, h);
+                p |= solid_get_pixels(e, x - e->r.x, y - e->r.y, w, h);
         }
         return p;
 }

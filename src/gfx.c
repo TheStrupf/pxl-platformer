@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "shared.h"
 #include "util.h"
+#include <string.h>
 
 // rgba values for the extended pico-8 palette
 // clang-format off
@@ -50,7 +51,7 @@ void gfx_init()
         const int STARTHEIGHT = 600;
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(STARTWIDTH, STARTHEIGHT, "Hello Git");
-        SetTargetFPS(FPS);
+        SetTargetFPS(FPS + 2);
         Image img = GenImageColor(BUFFER_WIDTH, BUFFER_HEIGHT, BLACK);
         ray_screentex = LoadTextureFromImage(img);
         UnloadImage(img);
@@ -259,22 +260,14 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
 {
         p.x += offsetx;
         p.y += offsety;
-        p = v2_add(p, o);
+        p = V2_ADD(p, o);
         o.x += r.x;
         o.y += r.y;
         const int x2 = r.x + r.w;
         const int y2 = r.y + r.h;
         const m2 m_inv = m2_inv(m);
 
-        // option 1: Loop over the whole target texture
-        // inefficient for small textures
-#if 0
-        const int dx1 = 0;
-        const int dy1 = 0;
-        const int dx2 = target.w;
-        const int dy2 = target.h;
-#else
-        // option 2: Calculate AABB rectangle by transforming
+        // Calculate AABB rectangle by transforming
         // the rectangle's four corners and calculating
         // the min/max for the x & and y axis
 
@@ -284,46 +277,42 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
         // c---d
 
         // transform point a
+        v2 v = M2V2_MUL(m_inv, p);
         v2 t = (v2){r.x - 1, r.y - 1};
-        t = v2_add(t, m2_v2_mul(m_inv, p));
-        t = v2_sub(t, o);
-        v2 v = m2_v2_mul(m, t);
+        t = V2_ADD(t, v);
+        t = V2_SUB(t, o);
+        v = M2V2_MUL(m, t);
         v2 p1 = v;
         v2 p2 = v;
 
-        // transform point c
-        t.y += r.h + 2;
-        v = m2_v2_mul(m, t);
-        p1 = v2_min(p1, v);
-        p2 = v2_max(p2, v);
-
-        // transform point d
-        t.x += r.w + 2;
-        v = m2_v2_mul(m, t);
-        p1 = v2_min(p1, v);
-        p2 = v2_max(p2, v);
-
-        // transform point b
-        t.y -= r.h + 2;
-        v = m2_v2_mul(m, t);
-        p1 = v2_min(p1, v);
-        p2 = v2_max(p2, v);
+        t.y += r.h + 2; // transform point c
+        v = M2V2_MUL(m, t);
+        p1 = V2_MIN(p1, v);
+        p2 = V2_MAX(p2, v);
+        t.x += r.w + 2; // transform point d
+        v = M2V2_MUL(m, t);
+        p1 = V2_MIN(p1, v);
+        p2 = V2_MAX(p2, v);
+        t.y -= r.h + 2; // transform point b
+        v = M2V2_MUL(m, t);
+        p1 = V2_MIN(p1, v);
+        p2 = V2_MAX(p2, v);
 
         // calculate target area
         const int dx1 = MAX((int)(p1.x - 1), 0);
         const int dy1 = MAX((int)(p1.y - 1), 0);
         const int dx2 = MIN((int)(p2.x + 1), target.w);
         const int dy2 = MIN((int)(p2.y + 1), target.h);
-#endif
+
         // loop over target area and map
         // each SCREEN pixel back to a SOURCE pixel
         for (int dy = dy1; dy < dy2; dy++) {
-                const float dyt = dy - p.y + 0.5f; // rounding - midpoint of screen pixel
+                const float dyt = dy - p.y + 0.5; // rounding - midpoint of screen pixel
                 const float c1 = m_inv.m12 * dyt + o.x;
                 const float c2 = m_inv.m22 * dyt + o.y;
                 const int cc = dy << target.shift;
                 for (int dx = dx1; dx < dx2; dx++) {
-                        float dxt = dx - p.x + 0.5f;
+                        float dxt = dx - p.x + 0.5;
                         // calculate if calculated source pixel is
                         // inside the specified source rectangle
                         int spx = (int)(m_inv.m11 * dxt + c1);
