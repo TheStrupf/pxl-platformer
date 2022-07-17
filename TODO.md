@@ -3,9 +3,11 @@
 - Gravity & jumping
 - Game rendering with layers and camera offset
 - Lighting system
-- Set up collision masks with links to Tiled map
 - Load Tiled map files
+  - Set up collision masks which correspond to tile IDs
+  - Decide on tileset format
+  - Autotiling C# script (blob tileset)
 - Load and play music
 - Tile Animations
+- Player animations
 - Main menu
-- Basic sprites
