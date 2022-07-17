@@ -1,0 +1,11 @@
+## TODO
+- Solid/platform entity movement
+- Gravity & jumping
+- Game rendering with layers and camera offset
+- Lighting system
+- Set up collision masks with links to Tiled map
+- Load Tiled map files
+- Load and play music
+- Tile Animations
+- Main menu
+- Basic sprites
