@@ -1,3 +1,10 @@
+**2022.07.17a**
+- Fixed main loop bug
+- Added sound playing
+- Added basic camera functionality
+- Prepared movement of platforms/solids
+- Transformed vector functions to macros
+
 **2022.07.16b**
 - Get pixels of solid entities
 - json: var naming fix
