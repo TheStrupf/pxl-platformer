@@ -1,3 +1,9 @@
+**2022.07.19a**
+- Jumping, acceleration, drag
+- Texture loading from file
+- Added stack allocation functionality
+- List struct list_find: Using memcmp for finding a provided element
+
 **2022.07.17a**
 - Fixed main loop bug
 - Added sound playing
