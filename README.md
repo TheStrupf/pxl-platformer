@@ -37,6 +37,7 @@ For Aseprite I'm using a [custom script](https://github.com/TheStrupf/pxl-platfo
 * Semantic Compression ([blog](https://caseymuratori.com/blog_0015)) - Casey Muratori
 * Handmade Hero ([YT channel](https://www.youtube.com/c/MollyRocket) - Casey Muratori
 * Bit Twiddling Hacks ([website](https://graphics.stanford.edu/~seander/bithacks.html)) - Sean Eron Anderson
+* Beej's Guide to C Programming ([website](https://beej.us/guide/bgc/)) - Beej
 
 ### Game Design & Art
 * Boss Keys ([video playlist](https://www.youtube.com/playlist?list=PLc38fcMFcV_ul4D6OChdWhsNsYY3NA5B2)) - Mark Brown (GMTK)
