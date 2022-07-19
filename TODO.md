@@ -1,6 +1,5 @@
 ## TODO
 - Solid/platform entity movement
-- Gravity & jumping
 - Game rendering with layers and camera offset
 - Lighting system
 - Load Tiled map files
