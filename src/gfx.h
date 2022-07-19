@@ -76,6 +76,7 @@ int gfx_height();
 // return tex as value
 // could return as a pointer IF I wanted to change texture dimensions
 tex gfx_tex_create(uint w, uint h);
+tex gfx_tex_load(const char *);
 void gfx_tex_destroy(tex t);
 void gfx_clear_tex(tex t, uchar col);
 void gfx_clear(uchar col);

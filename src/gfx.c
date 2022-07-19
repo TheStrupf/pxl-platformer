@@ -1,4 +1,5 @@
 #include "gfx.h"
+#include "jsonp.h"
 #include "mem.h"
 #include "raylib.h"
 #include "shared.h"
@@ -30,7 +31,7 @@ uchar pico_pal[128] = {
 #define GAME_WIDTH 384
 #define GAME_HEIGHT 216
 #define BUFFER_WIDTH 512
-#define BUFFER_HEIGHT 512
+#define BUFFER_HEIGHT 256
 
 static Texture2D ray_screentex;
 static uchar *screenbuffer;
@@ -51,7 +52,7 @@ void gfx_init()
         const int STARTHEIGHT = 600;
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(STARTWIDTH, STARTHEIGHT, "Hello Git");
-        SetTargetFPS(FPS + 2);
+        SetTargetFPS(120);
         Image img = GenImageColor(BUFFER_WIDTH, BUFFER_HEIGHT, BLACK);
         ray_screentex = LoadTextureFromImage(img);
         UnloadImage(img);
@@ -158,6 +159,31 @@ tex gfx_tex_create(uint w, uint h)
         return t;
 }
 
+tex gfx_tex_load(const char *filename)
+{
+        char *text = read_txt(filename);
+        jsn toks[16];
+        json_parse(text, toks, 16);
+        jsn *root = &toks[0];
+        tex t = gfx_tex_create(json_ik(root, "width"), json_ik(root, "height"));
+
+        int i = json_get(root, "data")->start;
+        for (int y = 0; y < t.h; y++) {
+                int cache = y << t.shift;
+                for (int x = 0; x < t.w; x++) {
+                        char a = text[i++];
+                        char b = text[i++];
+                        a = (a <= '9') ? a - '0' : (a & 0x7) + 9;
+                        b = (b <= '9') ? b - '0' : (b & 0x7) + 9;
+                        int res = (a << 4) + b;
+                        t.px[cache + x] = (uchar)res;
+                }
+        }
+
+        mem_free(text);
+        return t;
+}
+
 void gfx_tex_destroy(tex t)
 {
         if (t.px)
@@ -192,41 +218,41 @@ void gfx_sprite(tex s, int x, int y, rec r, char flags)
         int xa = 0;
         int ya = 0;
         switch (flags) {
-        case B8(00000000):
+        case B_00000000:
                 srcx = 1;
                 srcy = s.w;
                 break;
-        case B8(00000001):
+        case B_00000001:
                 srcx = -1;
                 srcy = s.w;
                 xa = r.w - 1;
                 break;
-        case B8(00000010):
+        case B_00000010:
                 srcx = 1;
                 srcy = -s.w;
                 ya = r.h - 1;
                 break;
-        case B8(00000011):
+        case B_00000011:
                 srcx = -1;
                 srcy = -s.w;
                 xa = r.w - 1;
                 ya = r.h - 1;
                 break;
-        case B8(00000100):
+        case B_00000100:
                 srcx = s.w;
                 srcy = 1;
                 break;
-        case B8(00000101):
+        case B_00000101:
                 srcx = -s.w;
                 srcy = 1;
                 ya = r.h - 1;
                 break;
-        case B8(00000110):
+        case B_00000110:
                 srcx = s.w;
                 srcy = -1;
                 xa = r.w - 1;
                 break;
-        case B8(00000111):
+        case B_00000111:
                 srcx = -s.w;
                 srcy = -1;
                 xa = r.w - 1;
@@ -303,18 +329,18 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
         const int dy1 = MAX((int)(p1.y - 1), 0);
         const int dx2 = MIN((int)(p2.x + 1), target.w);
         const int dy2 = MIN((int)(p2.y + 1), target.h);
+        p.y -= 0.5f; // rounding - midpoint of screen pixel
+        p.x -= 0.5f;
 
         // loop over target area and map
         // each SCREEN pixel back to a SOURCE pixel
         for (int dy = dy1; dy < dy2; dy++) {
-                const float dyt = dy - p.y + 0.5; // rounding - midpoint of screen pixel
+                const float dyt = dy - p.y;
                 const float c1 = m_inv.m12 * dyt + o.x;
                 const float c2 = m_inv.m22 * dyt + o.y;
                 const int cc = dy << target.shift;
                 for (int dx = dx1; dx < dx2; dx++) {
-                        float dxt = dx - p.x + 0.5;
-                        // calculate if calculated source pixel is
-                        // inside the specified source rectangle
+                        const float dxt = dx - p.x;
                         int spx = (int)(m_inv.m11 * dxt + c1);
                         if (spx < r.x || spx >= x2)
                                 continue;

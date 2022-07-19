@@ -11,6 +11,8 @@
 uint tick;
 game_world *world;
 
+tex playertex;
+
 // individual pixels of a tile
 // will be used to set sloped tiles etc.
 // clang-format off
@@ -43,6 +45,7 @@ void world_init()
         world->entities = list_create_sized(MAX_ENTITIES, sizeof(entity *));
         world->actors = list_create_sized(MAX_ENTITIES, sizeof(entity *));
         world->solids = list_create_sized(MAX_ENTITIES, sizeof(entity *));
+        playertex = gfx_tex_load("assets/gfx/player.json");
         world->w = 64;
         world->h = 64;
         world->pw = world->w * 8;
@@ -50,7 +53,8 @@ void world_init()
         world->cam.r.w = gfx_width();
         world->cam.r.h = gfx_height();
         en_hero();
-        set_tile_pixels(10, 10, 1);
+        for (int n = 0; n < 30; n++)
+                set_tile_pixels(n, 15, 1);
 }
 
 void world_update()
@@ -64,6 +68,8 @@ void world_update()
                 // fixed point
                 e->move_q8.x += (e->vel_q12.x >> 4);
                 e->move_q8.y += (e->vel_q12.y >> 4);
+                e->vel_q12.x = (e->vel_q12.x * e->drag_q8.x) >> 8;
+                e->vel_q12.y = (e->vel_q12.y * e->drag_q8.y) >> 8;
                 en_move(e, e->move_q8.x >> 8, e->move_q8.y >> 8);
                 e->move_q8.x &= 0xFF;
                 e->move_q8.y &= 0xFF;
@@ -100,7 +106,7 @@ void world_draw()
 
         entity *player;
         list_get(world->actors, 0, &player);
-        cam_center(player->r.x, player->r.y);
+        cam_center(player->x, player->y);
 
         const int tx1 = MAX(world->cam.r.x / 8 - 1, 0);
         const int ty1 = MAX(world->cam.r.y / 8 - 1, 0);
@@ -108,7 +114,9 @@ void world_draw()
         const int ty2 = MIN((world->cam.r.y + world->cam.r.h) / 8 + 1, world->h);
         world_draw_layer(0, tx1, ty1, tx2, ty2);
 
-        gfx_rec_filled(player->r.x, player->r.y, player->r.w, player->r.h, 5);
+        gfx_rec_filled(player->x, player->y, player->w, player->h, 5);
+
+        gfx_sprite(playertex, player->x - 10, player->y - 10, (rec){0, 0, 32, 32}, 0);
 
         for (int y = 0; y < y2; y++) {
                 for (int x = 0; x < x2; x++) {
@@ -122,6 +130,15 @@ void world_draw()
                 entity *e = entities[n];
                 // draw entity
         }
+}
+
+void world_load_map(const char *filename)
+{
+        const char *text = read_txt(filename);
+        en_reset_raw();
+        world->entities->n = 0;
+        world->solids->n = 0;
+        world->actors->n = 0;
 }
 
 void cam_center(int x, int y)
@@ -167,7 +184,7 @@ uchar get_pixels(int x, int y, int w, int h)
         entity **solids = world->solids->data;
         for (int n = 0; n < world->solids->n; n++) {
                 entity *e = solids[n];
-                p |= solid_get_pixels(e, x - e->r.x, y - e->r.y, w, h);
+                p |= solid_get_pixels(e, x - e->x, y - e->y, w, h);
         }
         return p;
 }

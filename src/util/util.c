@@ -23,8 +23,6 @@ char *read_txt(const char *filename)
         fread(txt, 1, length, fptr);
         txt[length] = '\0';
         fclose(fptr);
-        printf("read txt\n");
-        printf("%s\n", txt);
         return txt;
 }
 

@@ -61,6 +61,8 @@ void world_init();
 void world_update();
 void world_draw();
 
+void world_load_map(const char *);
+
 void cam_center(int x, int y);
 
 void set_tile_pixels(int tx, int ty, int collID);

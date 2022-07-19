@@ -1,9 +1,8 @@
 #include "mem.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define MEM_USE_STDALLOC 0
 
 #define ALIGN(s) ((s + ALIGNMENT - 1) & -ALIGNMENT)
 
@@ -12,26 +11,41 @@ typedef struct block {
         struct block *next;
 } block;
 
+typedef struct stack_header {
+        size_t size;
+        struct stack_header *prev;
+} stack_header;
+
+static block *b_free;
+static char *stackptr;
+static size_t stackremaining;
+static stack_header *stacktop;
+
 enum {
         ALIGNMENT = sizeof(void *),
         HEADER = ALIGN(sizeof(block)),
+        STACKHEADER = ALIGN(sizeof(stack_header)),
         SPLIT_THRESH = HEADER + ALIGNMENT,
 };
 
-static block *b_free = NULL;
-
-void mem_init(void *memory, size_t memory_size)
+size_t mem_align(size_t s)
 {
-        b_free = memory;
-        b_free->size = memory_size;
+        return ALIGN(s);
+}
+
+void mem_init(void *mem, size_t stack_size, size_t dynamic_size)
+{
+        stackptr = (char *)mem;
+        stackremaining = stack_size;
+        stacktop = NULL;
+
+        b_free = (block *)((char *)mem + stack_size);
+        b_free->size = dynamic_size;
         b_free->next = NULL;
 }
 
 void *mem_alloc(size_t s)
 {
-#if MEM_USE_STDALLOC == 1
-        return malloc(s);
-#endif
         if (s == 0)
                 return NULL;
         const size_t ALLOC_SIZE = ALIGN(s) + HEADER;
@@ -60,10 +74,6 @@ void *mem_alloc(size_t s)
 
 void mem_free(void *ptr)
 {
-#if MEM_USE_STDALLOC == 1
-        free(ptr);
-        return;
-#endif
         if (!ptr)
                 return;
         block *b = (block *)((char *)ptr - HEADER);
@@ -97,9 +107,6 @@ void mem_free(void *ptr)
 
 void *mem_realloc(void *p, size_t s)
 {
-#if MEM_USE_STDALLOC == 1
-        return realloc(p, s);
-#endif
         if (!p)
                 return mem_alloc(s);
         const block *b = (block *)((char *)p - HEADER);
@@ -114,4 +121,40 @@ void *mem_realloc(void *p, size_t s)
                 return NULL;
         }
         return p;
+}
+
+void *mem_stackalloc(size_t s)
+{
+        size_t size = ALIGN(s);
+        if (stackremaining >= STACKHEADER + size) {
+                stack_header *h = (stack_header *)stackptr;
+                h->size = STACKHEADER + size;
+                h->prev = stacktop;
+                stacktop = h;
+                stackptr += STACKHEADER;
+                void *m = stackptr;
+                stackptr += size;
+                stackremaining -= STACKHEADER + size;
+                return m;
+        }
+        return NULL;
+}
+
+void mem_stackpop()
+{
+        if (stacktop) {
+                stackptr -= stacktop->size;
+                stackremaining += stacktop->size;
+                stacktop = stacktop->prev;
+        }
+}
+
+void mem_stackpop_incl(void *p)
+{
+        while (stacktop) {
+                void *cur = (char *)stacktop + STACKHEADER;
+                mem_stackpop();
+                if (cur == p)
+                        return;
+        }
 }

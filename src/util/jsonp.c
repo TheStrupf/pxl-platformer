@@ -228,7 +228,7 @@ static void print_ws(int layer)
                 printf("    ");
 }
 
-void jdebug_tok(const char *s, jsn *t, int l)
+static void jdebug_tok(const char *s, jsn *t, int l)
 {
         print_ws(l);
         if (t->type == JSON_ARR) {
@@ -258,4 +258,5 @@ void jdebug_tok(const char *s, jsn *t, int l)
 void json_print_debug(const char *s, jsn *tokens)
 {
         jdebug_tok(s, &tokens[0], 0);
+        printf("\n");
 }
