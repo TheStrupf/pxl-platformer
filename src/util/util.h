@@ -5,8 +5,7 @@
 #include <float.h>
 #include <stdbool.h>
 
-u32 isqrt32(u32);
-u64 isqrt64(u64);
+ulong isqrt(ulong);
 
 typedef struct rec {
         int x, y;

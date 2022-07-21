@@ -64,30 +64,13 @@ void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pix
         }
 }
 
-u32 isqrt32(u32 x)
+ulong isqrt(ulong x)
 {
-        u32 r = x, q = 0, b = ((u32)1) << 30;
+        ulong r = x & 0xFFFFFFFFUL, q = 0, b = ((ulong)1) << 30;
         while (b > r)
                 b >>= 2;
         while (b > 0) {
-                u32 t = q + b;
-                q >>= 1;
-                if (r >= t) {
-                        r -= t;
-                        q += b;
-                }
-                b >>= 2;
-        }
-        return q;
-}
-
-u64 isqrt64(u64 x)
-{
-        u64 r = x, q = 0, b = ((u64)1) << 62;
-        while (b > r)
-                b >>= 2;
-        while (b > 0) {
-                u64 t = q + b;
+                ulong t = q + b;
                 q >>= 1;
                 if (r >= t) {
                         r -= t;

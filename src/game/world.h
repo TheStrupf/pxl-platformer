@@ -40,6 +40,7 @@ typedef struct game_world {
         uint ph;
 
         cam cam;
+        uchar baselight;
 
         list *entities; // entity*
         list *actors;   // entity*
@@ -48,6 +49,7 @@ typedef struct game_world {
         uchar tiles[NUM_TILES];
         tile rtiles[NUM_LAYERS][NUM_TILES];
         uchar pixels[NUM_TILES * 64]; // 8x8 pixels per tile
+
 } game_world;
 
 extern uint tick;

@@ -136,6 +136,11 @@ int gfx_height()
         return height;
 }
 
+tex gfx_screen_tex()
+{
+        return screentex;
+}
+
 tex gfx_tex_create(uint w, uint h)
 {
         tex t;

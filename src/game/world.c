@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "gfx.h"
 #include "input.h"
+#include "lighting.h"
 #include "mem.h"
 #include "shared.h"
 #include "util.h"
@@ -37,9 +38,24 @@ uchar tile_collision_masks[64 * 2] = {
 };
 // clang-format on
 
+typedef struct tileanimator {
+        char num_frames;
+        ushort frames[8];
+} tileanimator;
+
+tileanimator tileanimators[16];
+
+static int tile_frame(int ID)
+{
+        for (int n = 0; n < 16; n++) {
+                tileanimator *t = &tileanimators[n];
+        }
+}
+
 void world_init()
 {
         tick = 0;
+        light_init();
         world = mem_alloc(sizeof(game_world));
         memset(world, 0, sizeof(game_world));
         world->entities = list_create_sized(MAX_ENTITIES, sizeof(entity *));
@@ -98,6 +114,7 @@ static void world_draw_layer(int layer, int x1, int y1, int x2, int y2)
 
 void world_draw()
 {
+        gfx_clear(COL_WHITE);
         const int pw = world->pw;
         const int ph = world->ph;
         const int x2 = MIN(pw, gfx_width());
@@ -129,6 +146,22 @@ void world_draw()
         for (int n = 0; n < world->entities->n; n++) {
                 entity *e = entities[n];
                 // draw entity
+        }
+
+        light_clear(world->baselight);
+        if (world->baselight < 0xFF) {
+                light l;
+                l.x = 64;
+                l.y = 64;
+                l.r = 80;
+                l.strength = 255;
+                light_update(l);
+                l.x = 150;
+                l.y = 90;
+                l.r = 80;
+                l.strength = 255;
+                light_update(l);
+                light_apply_to(gfx_screen_tex(), 0, 0);
         }
 }
 

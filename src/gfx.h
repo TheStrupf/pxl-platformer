@@ -72,6 +72,7 @@ void gfx_set_translation(int x, int y);
 
 int gfx_width();
 int gfx_height();
+tex gfx_screen_tex();
 
 // return tex as value
 // could return as a pointer IF I wanted to change texture dimensions
