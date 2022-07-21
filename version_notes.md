@@ -1,3 +1,6 @@
+**2022.07.21a**
+- Added a bresenham-based per pixel lighting system 
+
 **2022.07.19a**
 - Jumping, acceleration, drag
 - Texture loading from file
