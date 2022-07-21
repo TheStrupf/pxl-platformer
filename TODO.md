@@ -1,7 +1,6 @@
 ## TODO
 - Solid/platform entity movement
 - Game rendering with layers and camera offset
-- Lighting system
 - Load Tiled map files
   - Set up collision masks which correspond to tile IDs
   - Decide on tileset format
