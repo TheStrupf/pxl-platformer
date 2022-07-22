@@ -8,7 +8,7 @@ A [changelog](version_notes.md) will contain a TL;DR for every code update.
 The game will end up as some kind of Metroidvania. I'm thinking about a healthy mix of The Legend of Zelda: The Wind Waker, Ori and the Blind Forest and Celeste. It should be lighthearted for the most part similar to TLOZ: The Wind Waker and A Hat in Time. I want to include multiple dedicated dungeons with boss fights and unique items needed for progression. I'm basically trying to make the game NES Zelda II should have been, at least according to my own vision.
 
 ### C dependencies
-Besides the base library for images, sound and input most things will be coded from scratch in C(99) with minimal use of external libraries. I'm using the following libraries:
+Besides the base library for images, sound and input most things will be coded from scratch in C with minimal use of external libraries. I'm using the following libraries:
 
 * Raylib
 * stdlib.h
@@ -18,6 +18,7 @@ Besides the base library for images, sound and input most things will be coded f
 * string.h
 * float.h
 * math.h
+* threads.h
 
 # Tools
 
