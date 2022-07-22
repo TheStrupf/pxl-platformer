@@ -2,12 +2,14 @@
 #define LIGHTING_H
 
 #include "shared.h"
+#include <stdbool.h>
 
 typedef struct light {
         uint r;
         uchar strength;
         int x;
         int y;
+        bool flickering;
 } light;
 
 typedef struct tex tex;

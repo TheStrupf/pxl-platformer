@@ -69,8 +69,8 @@ void world_init()
         world->cam.r.w = gfx_width();
         world->cam.r.h = gfx_height();
         en_hero();
-        for (int n = 0; n < 30; n++)
-                set_tile_pixels(n, 15, 1);
+        for (int n = 0; n < 64; n++)
+                set_tile_pixels(n, 20, 1);
 }
 
 void world_update()
@@ -154,24 +154,17 @@ void world_draw()
                 l.x = 64;
                 l.y = 64;
                 l.r = 80;
+                l.flickering = false;
                 l.strength = 255;
                 light_update(l);
-                l.x = 150;
-                l.y = 90;
+                l.x = player->x;
+                l.y = player->y;
                 l.r = 80;
+                l.flickering = true;
                 l.strength = 255;
                 light_update(l);
                 light_apply_to(gfx_screen_tex(), 0, 0);
         }
-}
-
-void world_load_map(const char *filename)
-{
-        const char *text = read_txt(filename);
-        en_reset_raw();
-        world->entities->n = 0;
-        world->solids->n = 0;
-        world->actors->n = 0;
 }
 
 void cam_center(int x, int y)

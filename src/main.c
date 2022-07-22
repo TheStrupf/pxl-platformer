@@ -22,6 +22,7 @@
 
 int main(void)
 {
+
         void *mem = malloc(MEMORY_DYN + MEMORY_STACK);
         if (!mem)
                 return 1;
@@ -31,34 +32,7 @@ int main(void)
         snd_init();
 
         int jumpsnd = snd_load("assets/snd/jump.wav");
-
         world_init();
-
-        /* JSON TEST
-        {
-                "description": "The test case description",
-                "schema": { "type": "string" },
-                "tests": [
-                        {
-                        "description": "a test with a valid instance",
-                        "data": "a string",
-                        "valid": true
-                        },
-                        {
-                        "description": "a test with an invalid instance",
-                        "data": 15,
-                        "valid": false
-                        }
-                ]
-        }
-        */
-        char *jsontest = "{\"description\" : \" The test case description \", \"schema\" : {\"type\" : \"string\"}, \"tests\" : [ { \"description\" : \"a test with a valid instance\",\"data\" : \"a string\",\"valid\" : true},{\"description\" : \"a test with an invalid instance\",\"data\" : 15,\"valid\" : false}]}";
-        jsn toks[256];
-        if (json_parse(jsontest, toks, 256) == JSON_RET_SUCCESS) {
-                json_print_debug(jsontest, toks);
-        } else {
-                PRINT("Json error\n");
-        }
 
         double acc = 0;
         double lasttime = GetTime();
@@ -83,6 +57,7 @@ int main(void)
 
                         gfx_begin();
                         world_draw();
+                        gfx_circle_outline(10, 10, 100, 18);
                         gfx_end();
                 }
                 gfx_show();
@@ -90,7 +65,6 @@ int main(void)
 
         snd_destroy();
         gfx_destroy();
-        printf("Reached\n");
         free(mem);
         return 0;
 }

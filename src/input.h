@@ -29,6 +29,8 @@ void btn_update();
 
 // input: button flags
 // returns true only if all flags are set, else false
+int btn_xdir();
+int btn_ydir();
 bool btn_pressed(int);
 bool btn_was_pressed(int);
 bool btn_just_pressed(int);

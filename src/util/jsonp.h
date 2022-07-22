@@ -56,13 +56,15 @@ enum json_return {
 };
 
 typedef struct jsn {
-        int type;
-        int start;
-        int end;
+        char type;
+        uint start;
+        uint end;
 
         struct jsn *first_child;
-        struct jsn *last_child;
-        struct jsn *next_sibling;
+        union {
+                struct jsn *last_child; // only used for parsing
+                struct jsn *next_sibling;
+        };
 } jsn;
 
 // json_parse returns a code

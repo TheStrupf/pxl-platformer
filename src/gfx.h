@@ -83,6 +83,9 @@ void gfx_clear_tex(tex t, uchar col);
 void gfx_clear(uchar col);
 void gfx_px(int x, int y, uchar col);
 
+uchar gfx_closest_col(uchar r, uchar g, uchar b);
+uchar gfx_closest_col_merged(uchar col, uchar r, uchar g, uchar b, uchar a);
+
 // flags: bitmask for transformation
 // 001: Flip X
 // 010: Flip Y
@@ -93,6 +96,8 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m);
 void gfx_line(int x1, int y1, int x2, int y2, uchar col);
 void gfx_rec_filled(int x, int y, uint w, uint h, uchar col);
 void gfx_rec_outline(int x, int y, uint w, uint h, uchar col);
+void gfx_circle_filled(int x, int y, int r, uchar col);
+void gfx_circle_outline(int x, int y, int r, uchar col);
 
 uchar gfx_pal_get(uchar index);
 void gfx_pal_shift(int);

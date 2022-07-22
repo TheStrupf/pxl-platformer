@@ -38,14 +38,36 @@ void btn_update()
                 btn_state |= BTN_R_SHOULDER;
 }
 
+int btn_xdir()
+{
+        if (btn_pressed(BTN_LEFT | BTN_RIGHT))
+                return 0;
+        if (btn_pressed(BTN_RIGHT))
+                return 1;
+        if (btn_pressed(BTN_LEFT))
+                return -1;
+        return 0;
+}
+
+int btn_ydir()
+{
+        if (btn_pressed(BTN_UP | BTN_DOWN))
+                return 0;
+        if (btn_pressed(BTN_DOWN))
+                return 1;
+        if (btn_pressed(BTN_UP))
+                return -1;
+        return 0;
+}
+
 bool btn_pressed(int b)
 {
-        return (btn_state & b);
+        return (btn_state & b) == b;
 }
 
 bool btn_was_pressed(int b)
 {
-        return (btn_pstate & b);
+        return (btn_pstate & b) == b;
 }
 
 bool btn_just_pressed(int b)

@@ -8,7 +8,7 @@
 
 static char *json;
 static int curr_tok;
-static int i;
+static uint i;
 static int spos;
 static bool link_key_value;
 static jsn *toks;
@@ -94,7 +94,9 @@ int json_parse(char *s, jsn *tokens, int num_tok)
                 case '}':
                 case ']':
                         link_key_value = false;
-                        stack[--spos]->end = i;
+                        tok = stack[--spos];
+                        tok->end = i;
+                        tok->last_child = NULL; // explicitly clear bc of union
                         break;
                 case ':':
                         link_key_value = true;

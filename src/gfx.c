@@ -52,10 +52,11 @@ void gfx_init()
         const int STARTHEIGHT = 600;
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
         InitWindow(STARTWIDTH, STARTHEIGHT, "Hello Git");
-        SetTargetFPS(120);
+        SetTargetFPS(75);
         Image img = GenImageColor(BUFFER_WIDTH, BUFFER_HEIGHT, BLACK);
         ray_screentex = LoadTextureFromImage(img);
         UnloadImage(img);
+        ray_screentex.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
         screenbuffer = mem_alloc(BUFFER_WIDTH * BUFFER_HEIGHT * 4); // 4 bytes per pixel
         screentex = gfx_tex_create(BUFFER_WIDTH, BUFFER_HEIGHT);
 }
@@ -90,6 +91,7 @@ void gfx_end()
 
 void gfx_show()
 {
+        // letterboxing
         int sw = GetScreenWidth();
         int sh = GetScreenHeight();
         float scalex = (float)sw / (float)width;
@@ -215,6 +217,16 @@ void gfx_px(int x, int y, uchar col)
         y += offsety;
         if ((uint)x < target.w && (uint)y < target.h)
                 target.px[x + (y << target.shift)] = col;
+}
+
+uchar gfx_closest_col(uchar r, uchar g, uchar b)
+{
+        return 0;
+}
+
+uchar gfx_closest_col_merged(uchar col, uchar r, uchar g, uchar b, uchar a)
+{
+        return 0;
 }
 
 void gfx_sprite(tex s, int x, int y, rec r, char flags)
@@ -363,9 +375,8 @@ void gfx_sprite_affine(tex s, v2 p, v2 o, rec r, m2 m)
 void gfx_line(int x1, int y1, int x2, int y2, uchar col)
 {
         col = palette[col];
-        if (col >= COL_TRANSPARENT)
+        if (col < COL_TRANSPARENT)
                 return;
-
         const int dx = ABS(x2 - x1);
         const int dy = -ABS(y2 - y1);
         const int sx = x2 > x1 ? 1 : -1;
@@ -400,17 +411,9 @@ void gfx_rec_filled(int x, int y, uint w, uint h, uchar col)
         const int y1 = MAX(y, 0);
         const int x2 = MIN(x + (int)w, target.w);
         const int y2 = MIN(y + (int)h, target.h);
-#if 1
         const int l = x2 - x1;
         for (int yi = y1; yi < y2; yi++)
                 memset(&target.px[x1 + (yi << target.shift)], col, l);
-#else
-        for (int yi = y1; yi < y2; yi++) {
-                const int c = yi << target.shift;
-                for (int xi = x1; xi < x2; xi++)
-                        target.px[xi + c] = col;
-        }
-#endif
 }
 
 void gfx_rec_outline(int x, int y, uint w, uint h, uchar col)
@@ -423,6 +426,61 @@ void gfx_rec_outline(int x, int y, uint w, uint h, uchar col)
         gfx_line(x1, y1, x2, y1, col);
         gfx_line(x2, y1, x2, y2, col);
         gfx_line(x1, y2, x2, y2, col);
+}
+
+static void gfx_internal_circle(int y, int x1, int x2, uchar col, bool filled)
+{
+        if ((uint)y >= target.h)
+                return;
+        if (filled) {
+                y <<= target.shift;
+                x1 = MAX(x1, 0) + y;
+                x2 = MIN(x2, target.w - 1) + y;
+                for (int n = x1; n <= x2; n++)
+                        target.px[n] = col;
+        } else {
+                y <<= target.shift;
+                if ((uint)x1 < target.w)
+                        target.px[x1 + y] = col;
+                if ((uint)x2 < target.w)
+                        target.px[x2 + y] = col;
+        }
+}
+
+static void gfx_circle(int xm, int ym, int r, uchar col, bool filled)
+{
+        col = palette[col];
+        if (col >= COL_TRANSPARENT)
+                return;
+        xm += offsetx;
+        ym += offsety;
+
+        int x = 0;
+        int y = r;
+        int d = 3 - 2 * r;
+        gfx_internal_circle(ym + y, xm, xm, col, filled);
+        gfx_internal_circle(ym - y, xm, xm, col, filled);
+        gfx_internal_circle(ym, xm - y, xm + y, col, filled);
+        while (y >= x++) {
+                if (d > 0)
+                        d += ((x - --y) << 2) + 10;
+                else
+                        d += (x << 2) + 6;
+                gfx_internal_circle(ym + y, xm - x, xm + x, col, filled);
+                gfx_internal_circle(ym - y, xm - x, xm + x, col, filled);
+                gfx_internal_circle(ym + x, xm - y, xm + y, col, filled);
+                gfx_internal_circle(ym - x, xm - y, xm + y, col, filled);
+        }
+}
+
+void gfx_circle_filled(int xm, int ym, int r, uchar col)
+{
+        gfx_circle(xm, ym, r, col, true);
+}
+
+void gfx_circle_outline(int xm, int ym, int r, uchar col)
+{
+        gfx_circle(xm, ym, r, col, false);
 }
 
 uchar gfx_pal_get(uchar index)
