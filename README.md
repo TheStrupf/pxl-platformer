@@ -11,6 +11,7 @@ The game will end up as some kind of Metroidvania. I'm thinking about a healthy 
 Besides the base library for images, sound and input most things will be coded from scratch in C with minimal use of external libraries. I'm using the following libraries:
 
 * Raylib
+* tinycthreads
 * stdlib.h
 * stdint.h
 * stdbool.h
@@ -18,7 +19,6 @@ Besides the base library for images, sound and input most things will be coded f
 * string.h
 * float.h
 * math.h
-* threads.h
 
 # Tools
 
