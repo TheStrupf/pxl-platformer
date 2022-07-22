@@ -1,3 +1,8 @@
+**2022.07.22a**
+- Lighting: Replaced sqrt lookup table by an inlined, unrolled and optimised sqrt function
+- Added variable height jumping
+- Added gfx circle methods
+
 **2022.07.21a**
 - Added a bresenham-based per pixel lighting system 
 
