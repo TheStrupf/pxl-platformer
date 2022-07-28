@@ -1,3 +1,7 @@
+**2022.07.28a**
+- Restructured engine code
+- Solid platform movement
+
 **2022.07.22a**
 - Lighting: Replaced sqrt lookup table by an inlined, unrolled and optimised sqrt function
 - Added variable height jumping
