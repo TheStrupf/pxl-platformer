@@ -1,9 +1,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include "engine.h"
 #include "list.h"
-#include "shared.h"
-#include "util.h"
 
 #define NUM_LAYERS 4
 #define NUM_TILES (512 * 512)
@@ -71,5 +70,10 @@ void set_tile_pixels(int tx, int ty, int collID);
 uchar get_pixels(int x, int y, int w, int h);
 void set_pixels(int x, int y, int w, int h, uchar px);
 void add_pixel_flags(int x, int y, int w, int h, uchar px);
+
+// void set_px(uchar *p, rec source, rec area);
+uchar get_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h);
+void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel);
+void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel);
 
 #endif

@@ -1,5 +1,5 @@
 #include "jsonp.h"
-#include "shared.h"
+#include "engine.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,7 +8,7 @@
 
 static char *json;
 static int curr_tok;
-static uint i;
+static int i;
 static int spos;
 static bool link_key_value;
 static jsn *toks;
@@ -67,15 +67,13 @@ int json_parse(char *s, jsn *tokens, int num_tok)
 
         // www.json.org for a flow chart
         for (char c = s[i]; c != '\0'; c = s[++i]) {
-                if (curr_tok >= num_tok - 2)
-                        return JSON_RET_TOKEN_LIMIT;
+                if (curr_tok >= num_tok - 2) return JSON_RET_TOKEN_LIMIT;
 
                 // tokens signaling the begin of a number
                 if ((48 <= c && c <= 57) || c == '-') {
                         tok = newtok(JSON_NUM);
 
-                        do // iterate as long as "number" characters appear
-                                c = s[++i];
+                        do c = s[++i];
                         while ((48 <= c && c <= 57) || c == '.' || c == 'e' ||
                                c == 'E' || c == '+' || c == '-');
                         i--;
@@ -105,8 +103,7 @@ int json_parse(char *s, jsn *tokens, int num_tok)
                         tok = newtok(JSON_STR);
                         tok->start++;
 
-                        while (s[++i] != '\"') {
-                        }
+                        while (s[++i] != '\"') {}
                         tok->end = i - 1;
                         break;
                 case 't':
@@ -153,8 +150,7 @@ jsn *json_get(jsn *root, const char *key)
                                         break;
                                 }
                         }
-                        if (equals)
-                                return temp->first_child;
+                        if (equals) return temp->first_child;
                 }
         }
         printf("key in root obj not found\n");

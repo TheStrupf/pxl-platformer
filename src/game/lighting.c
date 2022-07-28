@@ -1,11 +1,10 @@
 #include "lighting.h"
+#include "engine.h"
 #include "entity.h"
-#include "gfx.h"
-#include "mem.h"
-#include "shared.h"
-#include "util.h"
 #include "world.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define LSIZE 1024
 
@@ -19,14 +18,15 @@ static const uchar colormap[8192] = {
         #include "lighting_px.csv"
 };
 // clang-format on
+
 static uchar *lmap; // temporary buffer max size
 static uchar *lightmap;
 static uint lightrng = 213;
 
 void light_init()
 {
-        lightmap = mem_alloc(NUM_TILES * 64);
-        lmap = mem_alloc(LSIZE * LSIZE * 2);
+        lightmap = vmalloc(NUM_TILES * 64);
+        lmap = vmalloc(LSIZE * LSIZE * 2);
 }
 
 void light_clear(uchar baselight)
@@ -36,12 +36,11 @@ void light_clear(uchar baselight)
 
 void light_update(light l)
 {
-        if (l.r > MAXR)
-                l.r = MAXR;
-        const uint PW = world->pw;
-        const uint PH = world->ph;
-        const uint R = l.r + 1;
-        const uint SIZE = R * 2 + 1;
+        if (l.r > MAXR) l.r = MAXR;
+        uint PW = world->pw;
+        uint PH = world->ph;
+        uint R = l.r + 1;
+        uint SIZE = R * 2 + 1;
 
         // intersection light area and world
         rec lightrec = (rec){l.x - R, l.y - R, SIZE, SIZE};
@@ -53,42 +52,43 @@ void light_update(light l)
         uchar *pxmap = world->pixels;
         uchar *pxcache = &lmap[SIZE * SIZE]; // local pixel buffer just behind the local light buffer
         memset(lmap, 0, SIZE * SIZE * 2);    // clear both lightmap and collision map
-        const int Y2 = aabb.y + aabb.h;
-        const int X2 = aabb.x + aabb.w;
-        const int C0 = -lightrec.x - lightrec.y * SIZE;
+        int Y2 = aabb.y + aabb.h;
+        int X2 = aabb.x + aabb.w;
+        int C0 = -lightrec.x - lightrec.y * SIZE;
 
         // could use memcpy instead - but maybe I want to have a coarser lightmap than currently e.g. 2x2 instead of 1x1
         for (int y = aabb.y; y < Y2; y++) {
-                const int C1 = y * SIZE + C0;
-                const int C2 = y * PW;
+                int C1 = y * SIZE + C0;
+                int C2 = y * PW;
                 for (int x = aabb.x; x < X2; x++)
                         pxcache[x + C1] = pxmap[x + C2];
         }
+
         entity **solids = (entity **)world->solids->data;
         for (int n = 0; n < world->solids->n; n++) {
                 entity *e = solids[n];
                 rec temp;
-                if (try_rec_intersection(lightrec, EN_REC(e), &temp)) {
-                        int IX2 = temp.x + temp.w;
-                        int IY2 = temp.y + temp.h;
-                        int EW = e->w;
-                        int C3 = -e->x - e->y * EW;
-                        uchar *epx = e->px;
-                        for (int y = temp.y; y < IY2; y++) {
-                                const int C1 = y * SIZE + C0;
-                                const int C2 = y * EW + C3;
-                                for (int x = temp.x; x < IX2; x++)
-                                        pxcache[x + C1] |= epx[x + C2];
-                        }
+                if (!try_rec_intersection(lightrec, EN_REC(e), &temp))
+                        continue;
+                int IX2 = temp.x + temp.w;
+                int IY2 = temp.y + temp.h;
+                int EW = e->w;
+                int C3 = -e->x - e->y * EW;
+                uchar *epx = e->px;
+                for (int y = temp.y; y < IY2; y++) {
+                        int C1 = y * SIZE + C0;
+                        int C2 = y * EW + C3;
+                        for (int x = temp.x; x < IX2; x++)
+                                pxcache[x + C1] |= epx[x + C2];
                 }
         }
 
         // some caching
-        const int START = R + R * SIZE;
-        const uint STRENGTH = l.strength;
-        const uint CMP = STRENGTH << 16;
-        const uint SCALE_Q16 = CMP / (l.r * l.r);
-        const uint INCR_SQ = SCALE_Q16 << 1;
+        int START = R + R * SIZE;
+        uint STRENGTH = l.strength;
+        uint CMP = STRENGTH << 16;
+        uint SCALE_Q16 = CMP / (l.r * l.r);
+        uint INCR_SQ = SCALE_Q16 << 1;
 
         // four cases - not quadrants
         //  \ 2 /
@@ -128,9 +128,8 @@ void light_update(light l)
 
                 // cast rays
                 for (int n = 0; n < SIZE; n++) {
-                        // bitmasking for iteration of only x or y
-                        const int DTX = x2 + (n & my);
-                        const int DTY = y2 + (n & mx);
+                        int DTX = x2 + (n & my); // bitmasking for iteration of only x or y
+                        int DTY = y2 + (n & mx);
                         int DX, DY, XSTEP, YSTEP;
                         if (DTX > 0) {
                                 DX = DTX;
@@ -177,7 +176,7 @@ void light_update(light l)
                                 if (E2 >= DY) {
                                         err += DY;
                                         index += XSTEP;
-                                        dsq_q16 += ix;
+                                        dsq_q16 += ix; // incr by 1, 3, 5, 7, ...
                                         ix += INCR_SQ; // INCR_SQ = "2"
                                 }
                                 if (E2 <= DX) {
@@ -188,35 +187,31 @@ void light_update(light l)
                                 }
 
                                 // reduce light level if we hit a solid pixel
-                                if (pxcache[index] & PX_SOLID)
-                                        dsq_q16 <<= 1;
+                                if (pxcache[index] & PX_SOLID) dsq_q16 <<= 1;
                         }
                 }
         }
 
+        // merge local lightmap to world lightmap
         // mask for flickering
         uint mask = l.flickering ? B_00000011 : 0;
-
-        // merge local lightmap to world lightmap
         for (int y = aabb.y; y < Y2; y++) {
-                // fast LCG random for light flickering
-                lightrng = lightrng * 32310901 + 1;
+                lightrng = lightrng * 32310901 + 1; // fast LCG random for light flickering
                 uint rng = (lightrng >> 16) & mask;
-                const int C1 = y * PW;
-                const int C2 = y * SIZE + C0;
+                int C1 = y * PW;
+                int C2 = y * SIZE + C0;
                 for (int x = aabb.x; x < X2; x++) {
                         uint b = lmap[x + C2];
-                        if (b <= rng)
-                                continue;
+                        if (b <= rng) continue;
                         b -= rng;
                         uint ind = x + C1;
                         uint a = lightmap[ind];
                         uint r = a * a + b * b;
-                        if (r >= 65025) { // sqrt(65025) = 255, max light
+                        if (r >= 64516) { // sqrt(64516) = 254... put 255 instead
                                 lightmap[ind] = 0xFF;
                                 continue;
                         }
-                        // unrolled sqrt() loop
+
                         // clang-format off
                         uint q, t;
                         if (r >= 0x4000) {
@@ -238,27 +233,24 @@ void light_update(light l)
                         if (r >= t) { r -= t; q += 0x0004; }
                         t = q + 0x0001; q >>= 1;
                         if (r >= t) q += 0x0001;
-                        lightmap[ind] = q;
-                        // clang-format on
+                        lightmap[ind] = q; // clang-format on
                 }
         }
 }
 
+// replace texture pixels by corresponding pixels for the present light level
 void light_apply_to(tex t, int x, int y)
 {
         rec tr = (rec){x, y, t.w, t.h};
         rec rr = (rec){0, 0, world->pw, world->ph};
         rec r;
-        if (!try_rec_intersection(tr, rr, &r))
-                return;
+        if (!try_rec_intersection(tr, rr, &r)) return;
         int PW = world->pw;
         int x1 = r.x - x;
         int y1 = r.y - y;
         int x2 = x1 + r.w;
         int y2 = y1 + r.h;
-
         int C = x + y * PW;
-        // replace texture pixels by corresponding pixels for the present light level
         for (int yi = y1; yi < y2; yi++) {
                 int C2 = yi * PW + C;
                 int C3 = yi << t.shift;

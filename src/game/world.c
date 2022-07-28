@@ -1,13 +1,11 @@
 #include "world.h"
+#include "engine.h"
 #include "entity.h"
-#include "gfx.h"
-#include "input.h"
 #include "lighting.h"
-#include "mem.h"
-#include "shared.h"
-#include "util.h"
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 uint tick;
 game_world *world;
@@ -50,27 +48,31 @@ static int tile_frame(int ID)
         for (int n = 0; n < 16; n++) {
                 tileanimator *t = &tileanimators[n];
         }
+        return ID;
 }
 
 void world_init()
 {
         tick = 0;
         light_init();
-        world = mem_alloc(sizeof(game_world));
+        world = vmalloc(sizeof(game_world));
         memset(world, 0, sizeof(game_world));
         world->entities = list_create_sized(MAX_ENTITIES, sizeof(entity *));
         world->actors = list_create_sized(MAX_ENTITIES, sizeof(entity *));
         world->solids = list_create_sized(MAX_ENTITIES, sizeof(entity *));
-        playertex = gfx_tex_load("assets/gfx/player.json");
+        playertex = vmgfx_tex_load("assets/gfx/player.json");
         world->w = 64;
         world->h = 64;
         world->pw = world->w * 8;
         world->ph = world->h * 8;
-        world->cam.r.w = gfx_width();
-        world->cam.r.h = gfx_height();
+        world->cam.r.w = vmgfx_width();
+        world->cam.r.h = vmgfx_height();
         en_hero();
+        entity *dsolid = en_dummysolid();
+        dsolid->x = 10;
+        dsolid->y = 100;
         for (int n = 0; n < 64; n++)
-                set_tile_pixels(n, 20, 1);
+                set_tile_pixels(n, 20, 0);
 }
 
 void world_update()
@@ -79,8 +81,7 @@ void world_update()
         entity **entities = world->entities->data;
         for (int n = 0; n < world->entities->n; n++) {
                 entity *e = entities[n];
-                if (e->jump_table)
-                        e->jump_table[e->action](e);
+                if (e->jump_table) e->jump_table[e->action](e);
                 // fixed point
                 e->move_q8.x += (e->vel_q12.x >> 4);
                 e->move_q8.y += (e->vel_q12.y >> 4);
@@ -114,11 +115,11 @@ static void world_draw_layer(int layer, int x1, int y1, int x2, int y2)
 
 void world_draw()
 {
-        gfx_clear(COL_WHITE);
+        vmgfx_clear(COL_WHITE);
         const int pw = world->pw;
         const int ph = world->ph;
-        const int x2 = MIN(pw, gfx_width());
-        const int y2 = MIN(ph, gfx_height());
+        const int x2 = MIN(pw, vmgfx_width());
+        const int y2 = MIN(ph, vmgfx_height());
         uchar *px = world->pixels;
 
         entity *player;
@@ -131,14 +132,12 @@ void world_draw()
         const int ty2 = MIN((world->cam.r.y + world->cam.r.h) / 8 + 1, world->h);
         world_draw_layer(0, tx1, ty1, tx2, ty2);
 
-        gfx_rec_filled(player->x, player->y, player->w, player->h, 5);
-
-        gfx_sprite(playertex, player->x - 10, player->y - 10, (rec){0, 0, 32, 32}, 0);
+        vmgfx_sprite(playertex, player->x - 10, player->y - 10, (rec){0, 0, 32, 32}, 0);
 
         for (int y = 0; y < y2; y++) {
                 for (int x = 0; x < x2; x++) {
                         if (px[x + y * pw] & PX_SOLID)
-                                gfx_px(x, y, 5);
+                                vmgfx_px(x, y, 5);
                 }
         }
 
@@ -146,24 +145,27 @@ void world_draw()
         for (int n = 0; n < world->entities->n; n++) {
                 entity *e = entities[n];
                 // draw entity
+                vmgfx_rec_filled(e->x, e->y, e->w, e->h, COL_GREEN);
         }
-
+        world->baselight = 0xFF;
         light_clear(world->baselight);
         if (world->baselight < 0xFF) {
                 light l;
-                l.x = 64;
-                l.y = 64;
-                l.r = 80;
-                l.flickering = false;
-                l.strength = 255;
-                light_update(l);
-                l.x = player->x;
-                l.y = player->y;
-                l.r = 80;
+                l.x = 10;
+                l.y = 100;
+                l.r = 150;
                 l.flickering = true;
                 l.strength = 255;
                 light_update(l);
-                light_apply_to(gfx_screen_tex(), 0, 0);
+
+                light l2;
+                l2.x = 200;
+                l2.y = 50;
+                l2.r = 100;
+                l2.flickering = true;
+                l2.strength = 255;
+                light_update(l2);
+                light_apply_to(vmgfx_screen_tex(), 0, 0);
         }
 }
 
@@ -172,18 +174,14 @@ void cam_center(int x, int y)
         cam *c = &world->cam;
         if (!c->lock_x) {
                 c->r.x = x - c->r.w / 2;
-                if (c->r.x < 0)
-                        c->r.x = 0;
-                if (c->r.x + c->r.w >= world->pw)
-                        c->r.x = world->pw - c->r.w;
+                if (c->r.x < 0) c->r.x = 0;
+                if (c->r.x + c->r.w >= world->pw) c->r.x = world->pw - c->r.w;
         }
 
         if (!c->lock_y) {
                 c->r.y = y - c->r.h / 2;
-                if (c->r.y < 0)
-                        c->r.y = 0;
-                if (c->r.y + c->r.h >= world->ph)
-                        c->r.y = world->ph - c->r.h;
+                if (c->r.y < 0) c->r.y = 0;
+                if (c->r.y + c->r.h >= world->ph) c->r.y = world->ph - c->r.h;
         }
 }
 
@@ -225,4 +223,42 @@ void add_pixel_flags(int x, int y, int w, int h, uchar px)
 {
         add_pixels_(world->pixels, world->pw, world->ph,
                     x, y, w, h, px);
+}
+
+uchar get_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h)
+{
+        const int x1 = MAX(x, 0);
+        const int y1 = MAX(y, 0);
+        const int x2 = MIN(x + w, pw);
+        const int y2 = MIN(y + h, ph);
+        uchar px = 0;
+        for (int yi = y1; yi < y2; yi++) {
+                const int c = yi * pw;
+                for (int xi = x1; xi < x2; xi++)
+                        px |= p[xi + c];
+        }
+        return px;
+}
+
+void set_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
+{
+        const int x1 = MAX(x, 0);
+        const int y1 = MAX(y, 0);
+        const int x2 = MIN(x + w, pw);
+        const int y2 = MIN(y + h, ph);
+        for (int y = y1; y < y2; y++)
+                memset(&p[x1 + y * pw], pixel, x2 - x1);
+}
+
+void add_pixels_(uchar *p, int pw, int ph, int x, int y, int w, int h, uchar pixel)
+{
+        const int x1 = MAX(x, 0);
+        const int y1 = MAX(y, 0);
+        const int x2 = MIN(x + w, pw);
+        const int y2 = MIN(y + h, ph);
+        for (int y = y1; y < y2; y++) {
+                const int c = y * pw;
+                for (int x = x1; x < x2; x++)
+                        p[x + c] |= pixel;
+        }
 }

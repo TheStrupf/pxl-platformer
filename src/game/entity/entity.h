@@ -1,8 +1,8 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "shared.h"
-#include "util.h"
+#include "engine.h"
+#include "lighting.h"
 
 #define MAX_ENTITIES 64
 
@@ -49,11 +49,15 @@ typedef struct entity {
         bool gluetoground;
         bool collidable;
         struct entity *linked;
+        struct entity *ghostactor; // used when solids should move like actors...
         uchar *px;
+        light lig;
 } entity;
 
 #define EN_REC(e) ((rec){e->x, e->y, e->w, e->h})
 #define EN_OVERLAP(a, b) rec_overlap(EN_REC(a), EN_REC(b))
+
+int en_y_mask(entity *e);
 
 entity *en_create_actor();
 entity *en_create_solid(int w, int h);
@@ -64,6 +68,7 @@ bool en_grounded(entity *);
 uchar solid_get_pixels(entity *, int x, int y, int w, int h);
 
 entity *en_hero();
+entity *en_dummysolid();
 entity *en_template();
 
 void en_reset_raw();

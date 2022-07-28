@@ -1,7 +1,6 @@
 #ifndef JSONP_H
 #define JSONP_H
 
-#include "shared.h"
 #include <stdbool.h>
 
 // token based lightweight parser inspired by jsmn:
@@ -57,8 +56,8 @@ enum json_return {
 
 typedef struct jsn {
         char type;
-        uint start;
-        uint end;
+        int start;
+        int end;
 
         struct jsn *first_child;
         union {

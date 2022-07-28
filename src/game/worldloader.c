@@ -1,22 +1,30 @@
+#include "engine.h"
 #include "entity.h"
 #include "jsonp.h"
-#include "lighting.h"
-#include "mem.h"
-#include "shared.h"
-#include "util.h"
 #include "world.h"
+#include <stdbool.h>
 #include <string.h>
 
-static void world_load_tilelayer(jsn *j, int layer)
+static void load_tilelayer(jsn *j, int layer)
 {
         tile *tile = &world->tiles[layer];
         jsn *tilearr = json_get(j, "data");
         for (jsn *t = tilearr->first_child; t; t = t->next_sibling) {
                 uint tileID = json_i(t);
-                tile->ID = tileID;
+
                 // TODO: Tiled bitflags for transformations
                 // doc.mapeditor.org/en/latest/reference/global-tile-ids/
+
+                bool flipped_horizontally = (tileID & 0x80000000);
+                bool flipped_vertically = (tileID & 0x40000000);
+                bool flipped_diagonally = (tileID & 0x20000000);
+                tileID = (tileID & 0xFFFFFFF) - 1;
+                tile->ID = tileID;
         }
+}
+
+static void load_objects(jsn *j)
+{
 }
 
 void world_load_map(const char *filename)
@@ -28,7 +36,7 @@ void world_load_map(const char *filename)
         world->actors->n = 0;
 
         const uint TOKS = 1 << 22;
-        jsn *toks = mem_alloc(sizeof(jsn) * TOKS);
+        jsn *toks = vmalloc(sizeof(jsn) * TOKS);
         json_parse(text, toks, TOKS);
         jsn *root = &toks[0];
         world->w = json_ik(root, "width");
@@ -42,15 +50,17 @@ void world_load_map(const char *filename)
                 char namebuffer[32];
                 json_ck(l, "name", namebuffer, 32);
                 if (STREQ(namebuffer, "MAIN"))
-                        world_load_tilelayer(l, 0);
+                        load_tilelayer(l, 0);
                 else if (STREQ(namebuffer, "MAIN"))
-                        world_load_tilelayer(l, 0);
+                        load_tilelayer(l, 0);
                 else if (STREQ(namebuffer, "FG"))
-                        world_load_tilelayer(l, 0);
+                        load_tilelayer(l, 0);
                 else if (STREQ(namebuffer, "BG"))
-                        world_load_tilelayer(l, 0);
+                        load_tilelayer(l, 0);
+                else
+                        load_objects(l);
         }
 
-        mem_free(toks);
-        mem_free(text);
+        vmfree(toks);
+        vmfree(text);
 }

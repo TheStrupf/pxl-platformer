@@ -1,5 +1,5 @@
+#include "engine.h"
 #include "entity.h"
-#include "input.h"
 #include "world.h"
 
 const int HERO_GROUND_ACC = 700;
@@ -33,8 +33,8 @@ static void a_default(hero *this)
                 this->edgeticks--;
         }
 
-        if (btn_pressed(BTN_FACE_DOWN)) {
-                if (btn_just_pressed(BTN_FACE_DOWN) && this->edgeticks) {
+        if (vmbtn_pressed(BTN_FACE_DOWN)) {
+                if (vmbtn_just_pressed(BTN_FACE_DOWN) && this->edgeticks) {
                         super->vel_q12.y = -JUMP_INIT;
                         this->edgeticks = 0;
                         this->jumpticks = JUMP_TICKS;
@@ -46,8 +46,9 @@ static void a_default(hero *this)
                 this->jumpticks = 0;
         }
 
-        super->vel_q12.y += HERO_GRAVITY;
-        super->vel_q12.x += btn_xdir() * HERO_GROUND_ACC;
+        // super->vel_q12.y += HERO_GRAVITY;
+
+        // super->vel_q12.x += vmbtn_xdir() * HERO_GROUND_ACC;
 }
 
 static func functions[] = {a_default};

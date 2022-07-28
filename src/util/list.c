@@ -1,13 +1,13 @@
 #include "list.h"
-#include "mem.h"
+#include "engine.h"
 #include <stdlib.h>
 #include <string.h>
 
 list *list_create_sized(int cap, size_t esize)
 {
-        void *m1 = mem_alloc(sizeof(list));
+        void *m1 = vmalloc(sizeof(list));
         if (m1) {
-                void *m2 = mem_alloc(esize * cap);
+                void *m2 = vmalloc(esize * cap);
                 if (m2) {
                         list *l = m1;
                         l->data = m2;
@@ -16,7 +16,7 @@ list *list_create_sized(int cap, size_t esize)
                         l->cap = cap;
                         return l;
                 }
-                mem_free(m1);
+                vmfree(m1);
         }
         return NULL;
 }
@@ -24,17 +24,16 @@ list *list_create_sized(int cap, size_t esize)
 void list_destroy(list *l)
 {
         if (l) {
-                mem_free(l->data);
-                mem_free(l);
+                vmfree(l->data);
+                vmfree(l);
         }
 }
 
 void list_push(list *l, void *p)
 {
         if (l->n == l->cap) {
-                void *temp = mem_realloc(l->data, l->esize * l->cap * 2);
-                if (!temp)
-                        return;
+                void *temp = vmrealloc(l->data, l->esize * l->cap * 2);
+                if (!temp) return;
                 l->cap *= 2;
                 l->data = temp;
         }
@@ -48,8 +47,7 @@ void list_set(list *l, void *p, int i)
 
 void list_del_at(list *l, int i)
 {
-        if (i < 0 || i >= l->n)
-                return;
+        if (i < 0 || i >= l->n) return;
         if (--l->n > 0)
                 memmove(
                     (char *)l->data + i * l->esize,
@@ -74,16 +72,12 @@ int list_find(list *l, void *p)
 
 void list_pop(list *l, void *out)
 {
-        if (l->n == 0)
-                memset(out, 0, l->esize);
-        else
-                list_get(l, --l->n, out);
+        if (l->n == 0) memset(out, 0, l->esize);
+        else list_get(l, --l->n, out);
 }
 
 void list_get(list *l, int i, void *out)
 {
-        if (i < l->n)
-                memcpy(out, (char *)l->data + i * l->esize, l->esize);
-        else
-                memset(out, 0, l->esize);
+        if (i < l->n) memcpy(out, (char *)l->data + i * l->esize, l->esize);
+        else memset(out, 0, l->esize);
 }

@@ -1,8 +1,6 @@
 #include "entity.h"
+#include "engine.h"
 #include "list.h"
-#include "mem.h"
-#include "shared.h"
-#include "util.h"
 #include "world.h"
 
 // entity with additional padding
@@ -46,8 +44,7 @@ static entity *en_create()
 entity *en_create_actor()
 {
         entity *e = en_create();
-        if (!e)
-                return NULL;
+        if (!e) return NULL;
         list_push(world->actors, &e);
         e->flags |= EN_ACTOR;
         return e;
@@ -56,11 +53,11 @@ entity *en_create_actor()
 entity *en_create_solid(int w, int h)
 {
         entity *e = en_create();
-        if (!e)
-                return NULL;
+        if (!e) return NULL;
         e->w = w;
         e->h = h;
-        e->px = mem_alloc(w * h);
+        e->px = vmalloc(w * h);
+        e->ghostactor = NULL;
         list_push(world->solids, &e);
         e->flags |= EN_SOLID;
         return e;
@@ -101,9 +98,7 @@ static void en_move_actor(entity *e, int dx, int dy)
 
         move = ABS(dy);
         sn = SIGN(dy);
-        int mask = PX_SOLID;
-        if (e->landonplatforms && sn == 1)
-                mask |= PX_PLATFORM;
+        int mask = en_y_mask(e);
         while (move-- > 0) {
                 prev = e->y;
                 tmp = sn == 1 ? e->h : -1;
@@ -132,22 +127,18 @@ static void en_move_solid_axis(entity *solid, int *coord, int dx, int dy)
                 riders->n = 0;
                 for (int n = 0; n < world->actors->n; n++) {
                         entity *e = actors[n];
-
-                        // check if entity stands on solid
                         rec standingrow = (rec){e->x, e->y + e->h, e->w, 1};
-                        rec ir;
-                        if (try_rec_intersection(standingrow, EN_REC(solid), &ir)) {
-                                const int c = (ir.y - solid->y) * solid->w;
-                                const int x1 = ir.x - solid->x;
-                                const int x2 = x1 + ir.w;
-                                int mask = PX_SOLID;
-                                if (e->landonplatforms)
-                                        mask |= PX_PLATFORM;
-                                for (int xi = x1; xi < x2; xi++) {
-                                        if ((solid->px[xi + c] & mask) != 0) {
-                                                list_push(riders, &e);
-                                                break;
-                                        }
+                        rec ir; // check if entity stands on solid
+                        if (!try_rec_intersection(standingrow, EN_REC(solid), &ir))
+                                continue;
+                        const int c = (ir.y - solid->y) * solid->w;
+                        const int x1 = ir.x - solid->x;
+                        const int x2 = x1 + ir.w;
+                        int mask = en_y_mask(e);
+                        for (int xi = x1; xi < x2; xi++) {
+                                if ((solid->px[xi + c] & mask) != 0) {
+                                        list_push(riders, &e);
+                                        break;
                                 }
                         }
                 }
@@ -167,8 +158,14 @@ void en_move(entity *e, int dx, int dy)
                 en_move_actor(e, dx, dy);
         else if (e->flags & EN_SOLID) {
                 e->collidable = false;
-                en_move_solid_axis(e, &e->x, dx, 0);
-                en_move_solid_axis(e, &e->y, 0, dy);
+                if (e->ghostactor) {
+                        en_move_actor(e->ghostactor, dx, dy);
+                        en_move_solid_axis(e, &e->x, e->ghostactor->x - e->x, 0);
+                        en_move_solid_axis(e, &e->y, 0, e->ghostactor->y - e->y);
+                } else {
+                        en_move_solid_axis(e, &e->x, dx, 0);
+                        en_move_solid_axis(e, &e->y, 0, dy);
+                }
                 e->collidable = true;
         }
 }
@@ -185,8 +182,7 @@ bool en_grounded(entity *e)
 // input x, y, w, h relative to map origin or entity?
 uchar solid_get_pixels(entity *e, int x, int y, int w, int h)
 {
-        if (!e->collidable)
-                return 0;
+        if (!e->collidable) return 0;
         return get_pixels_(e->px, e->w, e->h, x, y, w, h);
 }
 
@@ -195,8 +191,15 @@ entity *en_tagged(uchar tag)
         entity **entities = world->entities->data;
         for (int n = 0; n < world->entities->n; n++) {
                 entity *e = entities[n];
-                if (e->tag == tag)
-                        return e;
+                if (e->tag == tag) return e;
         }
         return NULL;
+}
+
+int en_y_mask(entity *e)
+{
+        int mask = PX_SOLID;
+        if (e->landonplatforms && e->vel_q12.y >= 0)
+                mask |= PX_PLATFORM;
+        return mask;
 }

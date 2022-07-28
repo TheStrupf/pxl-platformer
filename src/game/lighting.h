@@ -1,15 +1,17 @@
 #ifndef LIGHTING_H
 #define LIGHTING_H
 
-#include "shared.h"
+#include "engine.h"
 #include <stdbool.h>
 
 typedef struct light {
-        uint r;
+        ushort r;
         uchar strength;
         int x;
         int y;
         bool flickering;
+        int angle; // TODO: implement light cones
+        int opening;
 } light;
 
 typedef struct tex tex;
